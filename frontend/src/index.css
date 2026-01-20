@@ -1,0 +1,7 @@
+body { background: #f8f9fa; }
+.app-shell { min-height: 100vh; display: flex; }
+.sidebar { width: 240px; background: #343a40; color: white; }
+.sidebar .nav-link { color: rgba(255,255,255,0.85); }
+.sidebar .nav-link.active { background: rgba(255,255,255,0.05); }
+.main { flex: 1; padding: 20px; }
+.header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
