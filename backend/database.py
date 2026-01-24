@@ -3,7 +3,13 @@ from datetime import datetime
 from typing import Optional, List, Dict
 import bcrypt
 
-client = MongoClient("mongodb://localhost:27017/")
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+client = MongoClient(mongo_uri)
 db = client["constitution_gpt"]
 
 # Collections

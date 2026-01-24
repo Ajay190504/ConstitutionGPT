@@ -1,0 +1,30 @@
+services:
+  # Backend Service
+  - type: web
+    name: constitution-gpt-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    rootDir: backend
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+
+  # Frontend Service
+  - type: web
+    name: constitution-gpt-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    startCommand: # Static sites don't need a start command
+    rootDir: frontend
+    publishDir: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: constitution-gpt-backend
+          property: host
