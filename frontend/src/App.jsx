@@ -18,6 +18,14 @@ import ApiService from './services/api'
 import './App.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 
+const ProtectedRoute = ({ children, allowedRoles, user }) => {
+  if (!user) return <Navigate to="/login" replace />
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />
+  }
+  return children
+}
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
@@ -39,7 +47,7 @@ function App() {
           // Token invalid, clear storage
           localStorage.removeItem('token')
           localStorage.removeItem('user')
-          ApiService.clearToken()
+          ApiService.clearTokens()
         })
         .finally(() => {
           setLoading(false)
@@ -47,6 +55,13 @@ function App() {
     } else {
       setLoading(false)
     }
+    const handleAuthExpired = () => {
+      handleLogout()
+      alert('Your session has expired. Please log in again.')
+    }
+
+    window.addEventListener('auth:expired', handleAuthExpired)
+    return () => window.removeEventListener('auth:expired', handleAuthExpired)
   }, [])
 
   const handleLogin = (userData) => {
@@ -61,7 +76,7 @@ function App() {
     setUser(null)
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    ApiService.clearToken()
+    ApiService.clearTokens()
     navigate('/login')
   }
 
@@ -156,7 +171,11 @@ function App() {
             <Route path="/profile" element={<ProfilePage user={user} onLogout={handleLogout} />} />
             <Route path="/help" element={<HelpPage />} />
             <Route path="/connect-lawyer" element={<ConnectLawyerPage />} />
-            <Route path="/admin" element={user?.role === 'admin' ? <AdminPage /> : <Navigate to="/dashboard" />} />
+            <Route path="/admin" element={
+              <ProtectedRoute user={user} allowedRoles={['admin', 'moderator']}>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
             <Route path="/inbox" element={<InboxPage />} />
             <Route path="/chat/:otherId" element={<MessagingPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

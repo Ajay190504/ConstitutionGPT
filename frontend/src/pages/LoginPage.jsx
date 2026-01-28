@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import ApiService from '../services/api'
 
-export default function LoginPage({ onLogin }){
+export default function LoginPage({ onLogin }) {
   const [formData, setFormData] = useState({ username: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -22,7 +22,6 @@ export default function LoginPage({ onLogin }){
 
     try {
       const response = await ApiService.login(formData.username, formData.password)
-      ApiService.setToken(response.token)
       onLogin(response.user)
     } catch (err) {
       setError(err.message || 'Login failed')
@@ -32,29 +31,29 @@ export default function LoginPage({ onLogin }){
   }
 
   return (
-    <div className="container d-flex align-items-center justify-content-center" style={{minHeight:'100vh'}}>
-      <div className="card p-4" style={{maxWidth:420,width:'100%'}}>
+    <div className="container d-flex align-items-center justify-content-center" style={{ minHeight: '100vh' }}>
+      <div className="card p-4" style={{ maxWidth: 420, width: '100%' }}>
         <h3 className="mb-3">Login to ConstitutionGPT</h3>
         {error && <div className="alert alert-danger">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label className="form-label">Username or Email</label>
-            <input 
-              className="form-control" 
+            <input
+              className="form-control"
               name="username"
-              value={formData.username} 
-              onChange={handleChange} 
+              value={formData.username}
+              onChange={handleChange}
               disabled={loading}
             />
           </div>
           <div className="mb-3">
             <label className="form-label">Password</label>
-            <input 
+            <input
               type="password"
-              className="form-control" 
+              className="form-control"
               name="password"
-              value={formData.password} 
-              onChange={handleChange} 
+              value={formData.password}
+              onChange={handleChange}
               disabled={loading}
             />
           </div>

@@ -52,7 +52,6 @@ export default function RegisterPage({ onLogin }) {
       )
       // Auto-login after successful registration
       const loginResponse = await ApiService.login(formData.username, formData.password)
-      ApiService.setToken(loginResponse.token)
       onLogin(loginResponse.user)
     } catch (err) {
       setError(err.message || 'Registration failed')

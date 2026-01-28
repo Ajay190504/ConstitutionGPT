@@ -1,10 +1,14 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+import openai
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+import time
+from collections import defaultdict
 from services.auth_service import AuthService
 from services.chat_service import ChatService
 from services.topics_service import TopicsService
@@ -13,14 +17,59 @@ load_dotenv()
 
 app = FastAPI()
 
-# ✅ ADD THIS (CORS FIX)
+# ✅ CORS FIX - Added FIRST to be the OUTERMOST middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # allow frontend
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False, # Set to False to allow wildcard origins
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Simple Rate Limiting Middleware
+user_requests = defaultdict(list)
+RATE_LIMIT = 60 # requests
+TIME_WINDOW = 60 # seconds
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    client_ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    
+    # Filter out requests older than the time window
+    user_requests[client_ip] = [t for t in user_requests[client_ip] if now - t < TIME_WINDOW]
+    
+    if len(user_requests[client_ip]) >= RATE_LIMIT:
+        return JSONResponse(
+            status_code=429, 
+            content={"detail": "Too many requests. Please try again later."}
+        )
+    
+    try:
+        user_requests[client_ip].append(now)
+        return await call_next(request)
+    except Exception as e:
+        print(f"Middleware Error: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Internal Server Error: {str(e)}"}
+        )
+
+# Global Exception Handler for OpenAI and other errors
+@app.exception_handler(openai.RateLimitError)
+async def openai_rate_limit_handler(request: Request, exc: openai.RateLimitError):
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "OpenAI API Quota Exceeded. Please check your billing/plan."}
+    )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print(f"Global Error: {str(exc)}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"An unexpected error occurred: {str(exc)}"}
+    )
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 security = HTTPBearer()
@@ -68,6 +117,9 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
 # Dependency to verify JWT token
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
@@ -76,7 +128,18 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="Invalid token")
     return payload
 
-# Dependency to check admin role
+# Role Check Dependency
+def check_role(allowed_roles: list):
+    async def role_checker(current_user: dict = Depends(get_current_user)):
+        if current_user.get("role") not in allowed_roles:
+            raise HTTPException(
+                status_code=403, 
+                detail=f"Access denied. Required roles: {', '.join(allowed_roles)}"
+            )
+        return current_user
+    return role_checker
+
+# Dependency to check admin role (kept for backward compatibility or simple use)
 async def check_admin(current_user: dict = Depends(get_current_user)):
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
@@ -100,6 +163,13 @@ def login(req: LoginRequest):
         raise HTTPException(status_code=401, detail=result["message"])
     return result
 
+@app.post("/refresh")
+def refresh(req: RefreshRequest):
+    result = AuthService.refresh_token(req.refresh_token)
+    if not result["success"]:
+        raise HTTPException(status_code=401, detail=result["message"])
+    return result
+
 @app.get("/verify-token")
 async def verify_token(current_user: dict = Depends(get_current_user)):
     return {"valid": True, "user": current_user}
@@ -107,20 +177,26 @@ async def verify_token(current_user: dict = Depends(get_current_user)):
 # Chat endpoints
 @app.post("/chat")
 async def chat(req: ChatRequest, current_user: dict = Depends(get_current_user)):
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are ConstitutionGPT, expert in Indian Constitution."},
-            {"role": "user", "content": req.message}
-        ]
-    )
-    
-    reply = response.choices[0].message.content
-    
-    # Save chat to database
-    ChatService.save_chat_message(current_user["user_id"], req.message, reply)
-    
-    return {"reply": reply}
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are ConstitutionGPT, expert in Indian Constitution."},
+                {"role": "user", "content": req.message}
+            ]
+        )
+        
+        reply = response.choices[0].message.content
+        
+        # Save chat to database
+        ChatService.save_chat_message(current_user["user_id"], req.message, reply)
+        
+        return {"reply": reply}
+    except openai.RateLimitError:
+        raise HTTPException(status_code=429, detail="OpenAI API Quota Exceeded. Please check your billing/plan.")
+    except Exception as e:
+        print(f"Chat Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/history")
 async def get_history(current_user: dict = Depends(get_current_user)):
@@ -181,7 +257,7 @@ async def get_lawyers(city: str = None):
     return {"lawyers": lawyers}
 
 @app.get("/admin/lawyers")
-async def admin_get_lawyers(current_admin: dict = Depends(check_admin)):
+async def admin_get_lawyers(current_user: dict = Depends(check_role(["admin", "moderator"]))):
     from database import users_collection
     lawyers = []
     for l in users_collection.find({"role": "lawyer"}):
@@ -197,7 +273,7 @@ async def admin_get_lawyers(current_admin: dict = Depends(check_admin)):
     return {"lawyers": lawyers}
 
 @app.post("/admin/verify")
-async def admin_verify_lawyer(req: VerificationRequest, current_admin: dict = Depends(check_admin)):
+async def admin_verify_lawyer(req: VerificationRequest, current_user: dict = Depends(check_role(["admin", "moderator"]))):
     from database import users_collection
     from bson import ObjectId
     result = users_collection.update_one(

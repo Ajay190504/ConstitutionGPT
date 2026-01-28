@@ -17,6 +17,7 @@ users_collection = db["users"]
 chat_collection = db["chats"]
 topics_collection = db["topics"]
 lawyer_chat_collection = db["lawyer_chats"]
+refresh_tokens_collection = db["refresh_tokens"]
 
 class User:
     def __init__(self, username: str, email: str, password: str, role: str = "user", phone: str = None, address: str = None, city: str = None):
