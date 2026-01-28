@@ -1,5 +1,4 @@
 import { useState } from "react";
-import ApiService from "../services/api";
 
 export default function LoginPage({ onLogin }) {
   const [username, setUsername] = useState("");
@@ -7,19 +6,20 @@ export default function LoginPage({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    try {
-      const res = await ApiService.login(username, password);
-      onLogin(res.user);
-    } catch (err) {
-      setError(err.message || "Login failed");
-    } finally {
+    // MOCK LOGIN (no backend)
+    setTimeout(() => {
+      if (username && password) {
+        onLogin({ username }); // fake user
+      } else {
+        setError("Please enter username and password");
+      }
       setLoading(false);
-    }
+    }, 800);
   };
 
   return (
