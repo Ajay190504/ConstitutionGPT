@@ -25,6 +25,7 @@ MANIFEST
 venv/
 env/
 ENV/
+.venv/
 
 # Environment Variables
 .env
@@ -42,6 +43,9 @@ ENV/
 *.swp
 *.swo
 *~
+
+# RAG / Vector Database
+chroma_db/
 
 # OS
 .DS_Store
@@ -75,3 +79,9 @@ build/
 tmp/
 temp/
 *.tmp
+
+# Testing
+.pytest_cache/
+.vitest-cache/
+coverage/
+htmlcov/

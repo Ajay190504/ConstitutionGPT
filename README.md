@@ -8,10 +8,11 @@ A full-stack web application that provides AI-powered assistance with the Indian
 - **Lawyer Marketplace**: Verified lawyer directory with city-based filtering
 - **Direct Messaging**: Real-time person-to-person chat between users and lawyers
 - **Admin Dashboard**: Verification system for legal professionals
-- **AI Chat**: Ask questions about the Indian Constitution and get expert answers
-- **Chat History**: View and manage your conversation history
-- **Constitutional Topics**: Browse and learn about various constitutional topics
-- **Modern UI**: Clean, responsive interface built with React, Bootstrap, and Bootstrap Icons
+- [x] **AI Chat (RAG)**: Ask questions about the Indian Constitution and get context-aware answers using a built-in vector database (ChromaDB)
+- [x] **Chat History**: View and manage your conversation history
+- [x] **Constitutional Topics**: Browse and learn about various constitutional topics
+- [x] **Automated Testing**: Comprehensive frontend test suite using Vitest and React Testing Library
+- [x] **Modern UI**: Clean, responsive interface built with React, Bootstrap, and Bootstrap Icons
 
 ## Tech Stack
 
@@ -20,6 +21,7 @@ A full-stack web application that provides AI-powered assistance with the Indian
 - **MongoDB**: NoSQL database for user data and chat history
 - **OpenAI API**: GPT-4o-mini for intelligent responses
 - **JWT**: Secure authentication tokens
+- **Vector Search (RAG)**: ChromaDB with Sentence Transformers (all-MiniLM-L6-v2) for free, local embeddings
 - **Speech Recognition**: Google Speech-to-Text
 - **Text-to-Speech**: Google TTS
 - **Translation**: Google Translate API
@@ -29,6 +31,7 @@ A full-stack web application that provides AI-powered assistance with the Indian
 - **Vite**: Fast build tool
 - **Bootstrap 5**: Responsive CSS framework
 - **React Router**: Client-side routing
+- **Testing**: Vitest, React Testing Library, jsdom
 
 ## Quick Start
 
@@ -43,8 +46,10 @@ A full-stack web application that provides AI-powered assistance with the Indian
 # 5. Create .env file with OPENAI_API_KEY
 # 6. Start MongoDB
 # 7. Run backend: python -m uvicorn main:app --port 8000
+#    (Note: RAG will initialize from existing topics on first run)
 # 8. Run frontend: npm run dev
-# 9. Open http://localhost:5173
+# 9. Run tests (optional): npm test
+# 10. Open http://localhost:5173
 ```
 
 ## Detailed Documentation
@@ -111,6 +116,14 @@ npm install
 3. Start the development server:
 ```bash
 npm run dev
+```
+
+### Running Tests
+
+To run the automated tests for the frontend:
+```bash
+cd frontend
+npm test
 ```
 
 ## Usage
