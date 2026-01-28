@@ -1,100 +1,57 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import ApiService from "../services/api";
 
 export default function LoginPage({ onLogin }) {
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-  });
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formData.username || !formData.password) {
-      setError("Please fill in all fields");
-      return;
-    }
-
-    setLoading(true);
     setError("");
+    setLoading(true);
 
     try {
-      const response = await ApiService.login(
-        formData.username,
-        formData.password
-      );
-
-      if (response?.user) {
-        onLogin(response.user);
-      } else {
-        throw new Error("Invalid response from server");
-      }
+      const res = await ApiService.login(username, password);
+      onLogin(res.user);
     } catch (err) {
-      setError(err?.message || "Login failed");
+      setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      className="container d-flex align-items-center justify-content-center"
-      style={{ minHeight: "100vh" }}
-    >
-      <div className="card p-4" style={{ maxWidth: 420, width: "100%" }}>
-        <h3 className="mb-3 text-center">Login to ConstitutionGPT</h3>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <form onSubmit={handleSubmit} style={{ width: 350 }}>
+        <h2>Login</h2>
 
-        {error && <div className="alert alert-danger">{error}</div>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label className="form-label">Username or Email</label>
-            <input
-              type="text"
-              className="form-control"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              disabled={loading}
-              required
-            />
-          </div>
+        <input
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          disabled={loading}
+        />
 
-          <div className="mb-3">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-control"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              disabled={loading}
-              required
-            />
-          </div>
+        <br /><br />
 
-          <div className="d-grid gap-2">
-            <button className="btn btn-primary" type="submit" disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
-            </button>
-          </div>
-        </form>
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
+        />
 
-        <hr />
+        <br /><br />
 
-        <div className="text-center">
-          <a href="/register">Create an account</a>
-        </div>
-      </div>
+        <button type="submit" disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
+        </button>
+      </form>
     </div>
   );
 }
