@@ -12,6 +12,7 @@ from collections import defaultdict
 from services.auth_service import AuthService
 from services.chat_service import ChatService
 from services.topics_service import TopicsService
+from services.rag_service import RAGService
 
 load_dotenv()
 
@@ -78,6 +79,10 @@ security = HTTPBearer()
 @app.on_event("startup")
 async def startup_event():
     TopicsService.initialize_default_topics()
+    try:
+        RAGService.initialize_with_topics()
+    except Exception as e:
+        print(f"RAG Initialization Error: {str(e)}")
 
 # Pydantic Models
 class ChatRequest(BaseModel):
@@ -178,10 +183,18 @@ async def verify_token(current_user: dict = Depends(get_current_user)):
 @app.post("/chat")
 async def chat(req: ChatRequest, current_user: dict = Depends(get_current_user)):
     try:
+        # Retrieve context from RAG
+        context_docs = RAGService.query(req.message)
+        context_text = "\n".join(context_docs)
+        
+        system_prompt = "You are ConstitutionGPT, expert in Indian Constitution."
+        if context_text:
+            system_prompt += f"\n\nUse the following constitutional context to help answer the user question:\n{context_text}"
+
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are ConstitutionGPT, expert in Indian Constitution."},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": req.message}
             ]
         )
