@@ -86,3 +86,7 @@ temp/
 .vitest-cache/
 coverage/
 htmlcov/
+
+# Gemini/Antigravity artifacts
+.gemini/
+brain/

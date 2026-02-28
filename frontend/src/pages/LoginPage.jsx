@@ -1,68 +1,65 @@
-import React, { useState } from 'react'
-import ApiService from '../services/api'
+import { useState } from "react";
+import ApiService from "../services/api";
 
 export default function LoginPage({ onLogin }) {
-  const [formData, setFormData] = useState({ username: '', password: '' })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!formData.username || !formData.password) {
-      setError('Please fill in all fields')
-      return
+    e.preventDefault();
+    if (!username || !password) {
+      setError("Please enter username and password");
+      return;
     }
 
-    setLoading(true)
-    setError('')
+    setError("");
+    setLoading(true);
 
     try {
-      const response = await ApiService.login(formData.username, formData.password)
-      onLogin(response.user)
+      const data = await ApiService.login(username, password);
+      if (data.success) {
+        onLogin(data.user);
+      } else {
+        setError(data.message || "Login failed");
+      }
     } catch (err) {
-      setError(err.message || 'Login failed')
+      setError(err.message || "Failed to reach server");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="container d-flex align-items-center justify-content-center" style={{ minHeight: '100vh' }}>
       <div className="card p-4" style={{ maxWidth: 420, width: '100%' }}>
-        <h3 className="mb-3">Login to ConstitutionGPT</h3>
+        <h3 className="mb-3 text-center">Login to ConstitutionGPT</h3>
         {error && <div className="alert alert-danger">{error}</div>}
         <form onSubmit={handleSubmit} className="needs-validation">
           <div className="mb-3">
-            <label className="form-label">Username or Email</label>
+            <label className="form-label">Username</label>
             <input
               type="text"
-              className={`form-control ${error && !formData.username ? 'is-invalid' : ''}`}
-              name="username"
-              placeholder="Enter Username or Email"
-              value={formData.username}
-              onChange={handleChange}
+              className="form-control"
+              placeholder="Enter Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               disabled={loading}
               required
             />
-            {error && !formData.username && <div className="invalid-feedback">Username or email is required</div>}
           </div>
           <div className="mb-3">
             <label className="form-label">Password</label>
             <input
               type="password"
-              className={`form-control ${error && !formData.password ? 'is-invalid' : ''}`}
-              name="password"
+              className="form-control"
               placeholder="Enter Password"
-              value={formData.password}
-              onChange={handleChange}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
               required
             />
-            {error && !formData.password && <div className="invalid-feedback">Password is required</div>}
           </div>
           <div className="d-grid gap-2">
             <button className="btn btn-primary" type="submit" disabled={loading}>
@@ -77,9 +74,11 @@ export default function LoginPage({ onLogin }) {
         </form>
         <hr />
         <div className="text-center">
-          <a href="/register">Create an account</a>
+          <small className="text-muted">Don't have an account?</small><br />
+          <a href="/register" className="text-decoration-none fw-bold">Create an account</a>
         </div>
       </div>
+
     </div>
-  )
+  );
 }

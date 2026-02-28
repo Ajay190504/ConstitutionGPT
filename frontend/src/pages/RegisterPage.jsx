@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import ApiService from '../services/api'
 
 export default function RegisterPage({ onLogin }) {

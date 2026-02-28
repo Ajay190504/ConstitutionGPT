@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 class ApiService {
   constructor() {
@@ -122,6 +122,14 @@ class ApiService {
   onRefreshed(token) {
     this.refreshSubscribers.map(cb => cb(token));
     this.refreshSubscribers = [];
+  }
+
+  async getCurrentUser() {
+    return this.request('/verify-token');
+  }
+
+  async logout() {
+    this.clearTokens();
   }
 
   // Authentication endpoints
@@ -298,4 +306,11 @@ class ApiService {
   }
 }
 
-export default new ApiService();
+if (!API_BASE_URL) {
+  console.error("VITE_API_BASE_URL is not defined");
+}
+
+const serviceInstance = new ApiService();
+export default serviceInstance;
+
+
