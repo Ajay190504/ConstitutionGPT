@@ -35,31 +35,43 @@ export default function LoginPage({ onLogin }) {
       <div className="card p-4" style={{ maxWidth: 420, width: '100%' }}>
         <h3 className="mb-3">Login to ConstitutionGPT</h3>
         {error && <div className="alert alert-danger">{error}</div>}
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="needs-validation">
           <div className="mb-3">
             <label className="form-label">Username or Email</label>
             <input
-              className="form-control"
+              type="text"
+              className={`form-control ${error && !formData.username ? 'is-invalid' : ''}`}
               name="username"
+              placeholder="Enter Username or Email"
               value={formData.username}
               onChange={handleChange}
               disabled={loading}
+              required
             />
+            {error && !formData.username && <div className="invalid-feedback">Username or email is required</div>}
           </div>
           <div className="mb-3">
             <label className="form-label">Password</label>
             <input
               type="password"
-              className="form-control"
+              className={`form-control ${error && !formData.password ? 'is-invalid' : ''}`}
               name="password"
+              placeholder="Enter Password"
               value={formData.password}
               onChange={handleChange}
               disabled={loading}
+              required
             />
+            {error && !formData.password && <div className="invalid-feedback">Password is required</div>}
           </div>
           <div className="d-grid gap-2">
             <button className="btn btn-primary" type="submit" disabled={loading}>
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Logging in...
+                </>
+              ) : 'Login'}
             </button>
           </div>
         </form>

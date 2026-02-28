@@ -11,38 +11,53 @@ class TopicsService:
             {
                 "title": "Fundamental Rights",
                 "description": "Basic rights guaranteed to all citizens of India",
-                "content": "The Fundamental Rights are defined in Part III of the Indian Constitution. These include Right to Equality, Right to Freedom, Right against Exploitation, Right to Freedom of Religion, Cultural and Educational Rights, and Right to Constitutional Remedies."
+                "content": "(Source: Part III, Article 12-35) The Fundamental Rights include: Right to Equality (Article 14-18), Right to Freedom (Article 19-22), Right against Exploitation (Article 23-24), Right to Freedom of Religion (Article 25-28), Cultural and Educational Rights (Article 29-30), and Right to Constitutional Remedies (Article 32)."
             },
             {
                 "title": "Directive Principles",
                 "description": "Guidelines for the government to establish social and economic democracy",
-                "content": "Directive Principles of State Policy are defined in Part IV of the Constitution. These are fundamental in governance of the country and include principles related to social justice, economic welfare, foreign policy, and legal principles."
+                "content": "(Source: Part IV, Article 36-51) Directive Principles of State Policy include principles related to social justice, economic welfare, foreign policy, and legal principles like Uniform Civil Code (Article 44)."
             },
             {
                 "title": "Fundamental Duties",
                 "description": "Moral obligations of citizens to promote patriotism and unity",
-                "content": "Fundamental Duties are defined in Part IV-A of the Constitution. These were added by the 42nd Amendment and include duties like respecting the Constitution, cherishing noble ideals, defending the country, and promoting harmony."
+                "content": "(Source: Part IV-A, Article 51A) Fundamental Duties include respecting the Constitution, cherishing noble ideals, defending the country, and promoting harmony."
             },
             {
                 "title": "Union Executive",
                 "description": "The President, Vice-President, Prime Minister and Council of Ministers",
-                "content": "The Union Executive consists of the President as the head of state, the Vice-President, the Prime Minister as head of government, and the Council of Ministers. The President exercises powers on the aid and advice of the Council of Ministers."
+                "content": "(Source: Part V, Chapter I, Article 52-78) The Union Executive consists of the President (Article 52), Vice-President (Article 63), and the Council of Ministers headed by the Prime Minister (Article 74)."
             },
             {
                 "title": "Parliament",
                 "description": "The supreme legislative body of India consisting of Lok Sabha and Rajya Sabha",
-                "content": "The Parliament of India is bicameral with Lok Sabha (House of the People) and Rajya Sabha (Council of States). It has powers to make laws on subjects in the Union List and Concurrent List, and can also make laws on State List under certain circumstances."
+                "content": "(Source: Part V, Chapter II, Article 79-122) The Parliament consists of the President and two Houses: Rajya Sabha (Article 80) and Lok Sabha (Article 81)."
             },
             {
                 "title": "Judiciary",
                 "description": "The integrated judicial system with Supreme Court at the apex",
-                "content": "The Indian judiciary is an integrated hierarchical system with the Supreme Court at the top, followed by High Courts in states, and subordinate courts below. It has the power of judicial review and acts as the guardian of the Constitution."
+                "content": "(Source: Part V, Chapter IV, Article 124-147) The Supreme Court of India (Article 124) is the highest court, followed by High Courts (Article 214) and subordinate courts."
+            },
+            {
+                "title": "Bharatiya Nyaya Sanhita (BNS), 2023",
+                "description": "The new criminal code replacing the Indian Penal Code (IPC)",
+                "content": "(Source: BNS, 2023) Replaces IPC 1860. Key Sections: Sedition is replaced by 'Acts endangering sovereignty' (Section 150), Mob Lynchings (Section 103), and Organized Crime (Section 109)."
+            },
+            {
+                "title": "Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023",
+                "description": "New procedural law replacing the Code of Criminal Procedure (CrPC)",
+                "content": "(Source: BNSS, 2023) Replaces CrPC 1973. Key Changes: Timeline for filing chargesheets (Section 193), Video conferencing for trials (Section 532), and zero FIR (Section 173)."
+            },
+            {
+                "title": "Bharatiya Sakshya Adhiniyam (BSA), 2023",
+                "description": "New evidence law replacing the Indian Evidence Act",
+                "content": "(Source: BSA, 2023) Replaces Indian Evidence Act 1872. Expands evidence to include digital records (Section 2), Primary evidence (Section 57), and Secondary evidence (Section 58)."
             }
         ]
         
-        # Check if topics already exist
-        if topics_collection.count_documents({}) == 0:
-            for topic_data in default_topics:
+        for topic_data in default_topics:
+            # Check if this specific topic already exists
+            if not topics_collection.find_one({"title": topic_data["title"]}):
                 topic = Topic(topic_data["title"], topic_data["description"], topic_data["content"])
                 topic_doc = {
                     "title": topic.title,

@@ -14,6 +14,8 @@ import ConnectLawyerPage from './pages/ConnectLawyerPage'
 import AdminPage from './pages/AdminPage'
 import InboxPage from './pages/InboxPage'
 import MessagingPage from './pages/MessagingPage'
+import MyAppointmentsPage from './pages/MyAppointmentsPage'
+import LawyerAppointmentsPage from './pages/LawyerAppointmentsPage'
 import ApiService from './services/api'
 import './App.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
@@ -118,6 +120,22 @@ function App() {
 
           {user?.role === 'user' && (
             <li className="nav-item">
+              <Link className="nav-link text-white" to="/my-appointments">
+                <i className="bi bi-calendar-check-fill me-2"></i>My Appointments
+              </Link>
+            </li>
+          )}
+
+          {user?.role === 'lawyer' && (
+            <li className="nav-item">
+              <Link className="nav-link text-white" to="/lawyer/appointments">
+                <i className="bi bi-calendar-event-fill me-2"></i>Client Appointments
+              </Link>
+            </li>
+          )}
+
+          {user?.role === 'user' && (
+            <li className="nav-item">
               <Link className="nav-link text-white bg-primary bg-opacity-25 mt-2" to="/connect-lawyer">
                 <i className="bi bi-people-fill me-2"></i>Connect to Lawyer
               </Link>
@@ -178,6 +196,19 @@ function App() {
             } />
             <Route path="/inbox" element={<InboxPage />} />
             <Route path="/chat/:otherId" element={<MessagingPage />} />
+
+            <Route path="/my-appointments" element={
+              <ProtectedRoute user={user} allowedRoles={['user', 'admin']}>
+                <MyAppointmentsPage />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/lawyer/appointments" element={
+              <ProtectedRoute user={user} allowedRoles={['lawyer', 'admin']}>
+                <LawyerAppointmentsPage />
+              </ProtectedRoute>
+            } />
+
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>

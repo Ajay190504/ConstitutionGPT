@@ -40,17 +40,17 @@ class AuthService:
         return refresh_token
 
     @staticmethod
-    def register_user(username: str, email: str, password: str, role: str = "user", phone: str = None, address: str = None, city: str = None) -> Dict:
-        # Check if user already exists
-        existing_user = users_collection.find_one({
-            "$or": [{"username": username}, {"email": email}]
-        })
-        
-        if existing_user:
-            return {"success": False, "message": "Username or email already exists"}
+    def register_user(username: str, email: str, password: str, role: str = "user", phone: str = None, address: str = None, city: str = None, lawyer_id_proof: str = None, lawyer_proof_file: str = None, consultation_fee: float = 0.0, specialization: str = None, years_of_experience: int = 0) -> Dict:
+        # Check if username exists
+        if users_collection.find_one({"username": username}):
+            return {"success": False, "message": "Username already exists"}
+            
+        # Check if email exists
+        if users_collection.find_one({"email": email}):
+            return {"success": False, "message": "Email already exists"}
         
         # Create new user
-        user = User(username, email, password, role, phone, address, city)
+        user = User(username, email, password, role, phone, address, city, lawyer_id_proof, lawyer_proof_file, consultation_fee, specialization, years_of_experience)
         user_data = {
             "username": user.username,
             "email": user.email,
@@ -59,6 +59,11 @@ class AuthService:
             "phone": user.phone,
             "address": user.address,
             "city": user.city,
+            "lawyer_id_proof": user.lawyer_id_proof,
+            "lawyer_proof_file": user.lawyer_proof_file,
+            "consultation_fee": user.consultation_fee,
+            "specialization": user.specialization,
+            "years_of_experience": user.years_of_experience,
             "is_verified": user.is_verified,
             "created_at": user.created_at,
             "is_active": user.is_active
@@ -101,7 +106,10 @@ class AuthService:
                 "username": user["username"],
                 "email": user["email"],
                 "role": user.get("role", "user"),
-                "is_verified": user.get("is_verified", True)
+                "is_verified": user.get("is_verified", True),
+                "consultation_fee": user.get("consultation_fee", 0.0),
+                "specialization": user.get("specialization"),
+                "years_of_experience": user.get("years_of_experience", 0)
             }
         }
     

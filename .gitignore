@@ -44,8 +44,9 @@ ENV/
 *.swo
 *~
 
-# RAG / Vector Database
+# RAG / Vector Database / Uploads
 chroma_db/
+backend/uploads/
 
 # OS
 .DS_Store

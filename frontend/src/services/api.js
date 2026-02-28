@@ -6,6 +6,7 @@ class ApiService {
     this.refreshTokenVal = localStorage.getItem('refreshToken');
     this.isRefreshing = false;
     this.refreshSubscribers = [];
+    this.baseURL = API_BASE_URL;
   }
 
   setTokens(accessToken, refreshToken) {
@@ -52,12 +53,17 @@ class ApiService {
     let url = `${API_BASE_URL}${endpoint}`;
     let config = {
       headers: {
-        'Content-Type': 'application/json',
+        ...(options.headers?.['Content-Type'] !== 'undefined' && { 'Content-Type': 'application/json' }),
         ...(this.token && { Authorization: `Bearer ${this.token}` }),
         ...options.headers,
       },
       ...options,
     };
+
+    // Remove Content-Type if it was set to 'undefined' to allow browser to set boundary
+    if (config.headers['Content-Type'] === 'undefined') {
+      delete config.headers['Content-Type'];
+    }
 
     try {
       let response = await fetch(url, config);
@@ -119,10 +125,27 @@ class ApiService {
   }
 
   // Authentication endpoints
-  async register(username, email, password, role = 'user', phone = '', address = '', city = '') {
+  async register(username, email, password, role = 'user', phone = '', address = '', city = '', lawyer_id_proof = '', lawyer_proof_file = null, consultation_fee = 0.0, specialization = '', years_of_experience = 0) {
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('email', email);
+    formData.append('password', password);
+    formData.append('role', role);
+    formData.append('phone', phone);
+    formData.append('address', address);
+    formData.append('city', city);
+    formData.append('lawyer_id_proof', lawyer_id_proof);
+    if (lawyer_proof_file) {
+      formData.append('lawyer_proof_file', lawyer_proof_file);
+    }
+    formData.append('consultation_fee', consultation_fee);
+    formData.append('specialization', specialization);
+    formData.append('years_of_experience', years_of_experience);
+
     return this.request('/register', {
       method: 'POST',
-      body: JSON.stringify({ username, email, password, role, phone, address, city }),
+      headers: { 'Content-Type': 'undefined' }, // Let fetch set the boundary
+      body: formData,
     });
   }
 
@@ -142,10 +165,10 @@ class ApiService {
   }
 
   // Chat endpoints
-  async sendMessage(message) {
+  async sendMessage(message, lang = 'en') {
     return this.request('/chat', {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, lang }),
     });
   }
 
@@ -177,9 +200,12 @@ class ApiService {
   }
 
   // Lawyer & Admin endpoints
-  async getLawyers(city = '') {
-    const endpoint = city ? `/lawyers?city=${city}` : '/lawyers';
-    return this.request(endpoint);
+  async getLawyers(city = '', minRating = 0, specialization = '', sort = '', name = '') {
+    let url = `/lawyers?city=${city}&min_rating=${minRating}`;
+    if (specialization) url += `&specialization=${specialization}`;
+    if (sort) url += `&sort=${sort}`;
+    if (name) url += `&name=${name}`;
+    return this.request(url);
   }
 
   async adminGetLawyers() {
@@ -193,11 +219,36 @@ class ApiService {
     });
   }
 
+  // Review endpoints
+  async submitReview(lawyerId, rating, comment) {
+    const formData = new FormData();
+    formData.append('rating', rating);
+    if (comment) formData.append('comment', comment);
+
+    return this.request(`/lawyer/${lawyerId}/review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'undefined' },
+      body: formData,
+    });
+  }
+
+  async getLawyerReviews(lawyerId) {
+    return this.request(`/lawyer/${lawyerId}/reviews`);
+  }
+
   // Person-to-Person Messaging
-  async sendMessageToOther(receiverId, message) {
+  async sendMessageToOther(receiverId, message = '', file = null) {
+    const formData = new FormData();
+    formData.append('receiver_id', receiverId);
+    formData.append('message', message);
+    if (file) {
+      formData.append('file', file);
+    }
+
     return this.request('/messages', {
       method: 'POST',
-      body: JSON.stringify({ receiver_id: receiverId, message }),
+      headers: { 'Content-Type': 'undefined' },
+      body: formData,
     });
   }
 
@@ -209,10 +260,40 @@ class ApiService {
     return this.request('/chat-inbox');
   }
 
+  async updateLawyerProfile(data) {
+    return this.request('/profile/lawyer', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
   async changePassword(currentPassword, newPassword) {
     return this.request('/change-password', {
       method: 'POST',
       body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    });
+  }
+
+  // Appointment endpoints
+  async bookAppointment(lawyerId, date, timeSlot, notes = '') {
+    return this.request('/appointments/book', {
+      method: 'POST',
+      body: JSON.stringify({ lawyer_id: lawyerId, date, time_slot: timeSlot, notes }),
+    });
+  }
+
+  async getUserAppointments() {
+    return this.request('/appointments/user');
+  }
+
+  async getLawyerAppointments() {
+    return this.request('/appointments/lawyer');
+  }
+
+  async updateAppointmentStatus(appointmentId, status) {
+    return this.request(`/appointments/${appointmentId}/status`, {
+      method: 'POST',
+      body: JSON.stringify({ status }),
     });
   }
 }

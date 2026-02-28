@@ -5,8 +5,12 @@ A full-stack web application that provides AI-powered assistance with the Indian
 ## Features
 
 - **User Roles**: Differentiated registration for regular Users and legal Professionals (Lawyers)
-- **Lawyer Marketplace**: Verified lawyer directory with city-based filtering
-- **Direct Messaging**: Real-time person-to-person chat between users and lawyers
+- **Lawyer Marketplace**: Verified lawyer directory with city, name, and specialization filtering
+- **Advanced Sorting**: Discover lawyers by Fees, Experience, or Ratings
+- **Voice AI (V2.0)**: Dictate legal questions and messages using Speech-to-Text 🎙️
+- **Secure File Sharing (V2.0)**: Exchange PDFs/Images for case files and documents 📁
+- **Consultation Booking (V2.0)**: Full appointment lifecycle (Book -> Accept/Reject -> Complete) 📅
+- **Unified Messaging**: Real-time person-to-person chat with document history
 - **Admin Dashboard**: Verification system for legal professionals
 - [x] **AI Chat (RAG)**: Ask questions about the Indian Constitution and get context-aware answers using a built-in vector database (ChromaDB)
 - [x] **Chat History**: View and manage your conversation history

@@ -53,6 +53,8 @@ export default function AdminPage() {
                                     <th>Name</th>
                                     <th>Contact Info</th>
                                     <th>Location</th>
+                                    <th>ID Proof / License</th>
+                                    <th>Attachment</th>
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>
@@ -69,7 +71,24 @@ export default function AdminPage() {
                                         </td>
                                         <td>
                                             <div>{lawyer.city}</div>
-                                            <small className="text-muted d-block" style={{ maxWidth: '200px' }}>{lawyer.address}</small>
+                                            <small className="text-muted d-block text-truncate" style={{ maxWidth: '150px' }}>{lawyer.address}</small>
+                                        </td>
+                                        <td>
+                                            <code className="bg-light p-1 rounded border small">{lawyer.lawyer_id_proof || 'N/A'}</code>
+                                        </td>
+                                        <td>
+                                            {lawyer.lawyer_proof_file ? (
+                                                <a
+                                                    href={`${ApiService.baseURL}/uploads/${lawyer.lawyer_proof_file}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="btn btn-sm btn-link p-0"
+                                                >
+                                                    <i className="bi bi-file-earmark-text me-1"></i>View Doc
+                                                </a>
+                                            ) : (
+                                                <span className="text-muted small">No file</span>
+                                            )}
                                         </td>
                                         <td>
                                             {lawyer.is_verified ? (
