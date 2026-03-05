@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 import os
 import time
 from collections import defaultdict
+import threading
 from services.auth_service import AuthService
 from services.chat_service import ChatService
 from services.topics_service import TopicsService
@@ -98,14 +99,16 @@ async def startup_event():
 
     TopicsService.initialize_default_topics()
     
-    # Try to initialize RAG, but don't let it hang the whole server
-    try:
-        print("🚀 Initializing AI Search (RAG)... this may take a minute on first run.")
-        RAGService.initialize_with_topics()
-        print("✅ AI Search initialized successfully.")
-    except Exception as e:
-        print(f"⚠️ RAG Initialization postponed or failed: {str(e)}")
-        print("The app will still run, but AI search might be limited.")
+    # Initialize RAG in a separate thread to prevent blocking server startup
+    def run_rag_init():
+        try:
+            print("🚀 Initializing AI Search (RAG) in background...")
+            RAGService.initialize_with_topics()
+            print("✅ AI Search initialized successfully.")
+        except Exception as e:
+            print(f"⚠️ RAG Initialization failed: {str(e)}")
+
+    threading.Thread(target=run_rag_init, daemon=True).start()
 
 # Pydantic Models
 class ChatRequest(BaseModel):
@@ -117,10 +120,10 @@ class RegisterRequest(BaseModel):
     email: str
     password: str
     role: str = "user"
-    phone: str = None
-    address: str = None
-    city: str = None
-    lawyer_id_proof: str = None
+    phone: str
+    address: str
+    city: str
+    lawyer_id_proof: Optional[str] = None
 
 class LawyerResponse(BaseModel):
     id: str
@@ -161,12 +164,32 @@ class LoginRequest(BaseModel):
 class RefreshRequest(BaseModel):
     refresh_token: str
 
+class TopicRequest(BaseModel):
+    title: str
+    description: str
+    content: str
+
 # Dependency to verify JWT token
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from database import users_collection
+    from bson import ObjectId
+    
     token = credentials.credentials
     payload = AuthService.verify_token(token)
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
+        
+    # Fetch fresh user data to ensure profile changes are reflected
+    user = users_collection.find_one({"_id": ObjectId(payload["user_id"])})
+    if user:
+        payload["city"] = user.get("city")
+        payload["phone"] = user.get("phone")
+        payload["address"] = user.get("address")
+        payload["consultation_fee"] = user.get("consultation_fee")
+        payload["specialization"] = user.get("specialization")
+        payload["years_of_experience"] = user.get("years_of_experience")
+        payload["is_verified"] = user.get("is_verified", False)
+        
     return payload
 
 # Role Check Dependency
@@ -192,15 +215,23 @@ async def register(
     email: str = Form(...),
     password: str = Form(...),
     role: str = Form("user"),
-    phone: str = Form(None),
-    address: str = Form(None),
-    city: str = Form(None),
+    phone: str = Form(...),
+    address: str = Form(...),
+    city: str = Form(...),
     lawyer_id_proof: str = Form(None),
     lawyer_proof_file: UploadFile = File(None),
     consultation_fee: float = Form(0.0),
     specialization: str = Form(None),
     years_of_experience: int = Form(0)
 ):
+    # Enforce mandatory fields for lawyer role
+    if role == "lawyer":
+        if not lawyer_id_proof:
+            raise HTTPException(status_code=400, detail="Lawyer ID proof number is required")
+        if not lawyer_proof_file:
+            raise HTTPException(status_code=400, detail="Lawyer document proof file is required")
+        if not specialization:
+            raise HTTPException(status_code=400, detail="Specialization is required")
     # Handle file upload if lawyer
     proof_filename = None
     if role == "lawyer" and lawyer_proof_file:
@@ -356,6 +387,27 @@ async def get_topic(topic_id: str):
 async def search_topics(query: str):
     topics = TopicsService.search_topics(query)
     return {"topics": topics}
+
+@app.post("/topics")
+async def add_topic(req: TopicRequest, current_user: dict = Depends(check_role(["admin", "moderator"]))):
+    result = TopicsService.add_topic(req.title, req.description, req.content)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return result
+
+@app.put("/topics/{topic_id}")
+async def update_topic(topic_id: str, req: TopicRequest, current_user: dict = Depends(check_role(["admin", "moderator"]))):
+    result = TopicsService.update_topic(topic_id, req.title, req.description, req.content)
+    if not result["success"]:
+        raise HTTPException(status_code=404, detail=result["message"])
+    return result
+
+@app.delete("/topics/{topic_id}")
+async def delete_topic(topic_id: str, current_user: dict = Depends(check_role(["admin", "moderator"]))):
+    result = TopicsService.delete_topic(topic_id)
+    if not result["success"]:
+        raise HTTPException(status_code=404, detail=result["message"])
+    return result
 
 class UpdateLawyerProfileRequest(BaseModel):
     phone: str = None

@@ -17,6 +17,9 @@ class AuthService:
             "username": user_data["username"],
             "role": user_data.get("role", "user"),
             "is_verified": user_data.get("is_verified", True),
+            "city": user_data.get("city"),
+            "phone": user_data.get("phone"),
+            "address": user_data.get("address"),
             "exp": datetime.utcnow() + timedelta(minutes=30) # Short-lived
         }
         return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
@@ -107,6 +110,9 @@ class AuthService:
                 "email": user["email"],
                 "role": user.get("role", "user"),
                 "is_verified": user.get("is_verified", True),
+                "city": user.get("city"),
+                "phone": user.get("phone"),
+                "address": user.get("address"),
                 "consultation_fee": user.get("consultation_fee", 0.0),
                 "specialization": user.get("specialization"),
                 "years_of_experience": user.get("years_of_experience", 0)

@@ -75,62 +75,69 @@ export default function ConnectLawyerPage() {
         <div className="container py-4">
             <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
                 <h2>Connect with Legal Experts</h2>
-                <form className="d-flex flex-wrap gap-2" onSubmit={handleSearch}>
-                    <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Search by name..."
-                        value={nameFilter}
-                        onChange={(e) => setNameFilter(e.target.value)}
-                        style={{ maxWidth: '180px' }}
-                    />
-                    <input
-                        type="text"
-                        className="form-control"
-                        placeholder="City..."
-                        value={cityFilter}
-                        onChange={(e) => setCityFilter(e.target.value)}
-                        style={{ maxWidth: '140px' }}
-                    />
-                    <select
-                        className="form-select"
-                        value={specializationFilter}
-                        onChange={(e) => setSpecializationFilter(e.target.value)}
-                        style={{ maxWidth: '160px' }}
-                    >
-                        <option value="">All Specializations</option>
-                        <option value="Criminal Law">Criminal Law</option>
-                        <option value="Civil Law">Civil Law</option>
-                        <option value="Constitutional Law">Constitutional Law</option>
-                        <option value="Family Law">Family Law</option>
-                        <option value="Corporate Law">Corporate Law</option>
-                        <option value="Consumer Rights">Consumer Rights</option>
-                    </select>
-                    <select
-                        className="form-select"
-                        value={ratingFilter}
-                        onChange={(e) => setRatingFilter(Number(e.target.value))}
-                        style={{ maxWidth: '130px' }}
-                    >
-                        <option value="0">All Ratings</option>
-                        <option value="4">4+ Stars</option>
-                        <option value="3">3+ Stars</option>
-                    </select>
-                    <select
-                        className="form-select"
-                        value={sortFilter}
-                        onChange={(e) => handleSortChange(e.target.value)}
-                        style={{ maxWidth: '160px' }}
-                    >
-                        <option value="">Sort By: Default</option>
-                        <option value="fee_asc">Fee: Low to High</option>
-                        <option value="exp_desc">Experience: High to Low</option>
-                        <option value="rating_desc">Rating: High to Low</option>
-                    </select>
-                    <button className="btn btn-primary" type="submit">Search</button>
-                    {(cityFilter || ratingFilter > 0 || specializationFilter || sortFilter || nameFilter) && (
-                        <button className="btn btn-outline-secondary" type="button" onClick={() => { setCityFilter(''); setRatingFilter(0); setSpecializationFilter(''); setSortFilter(''); setNameFilter(''); fetchLawyers('', 0, '', '', ''); }}>Clear</button>
-                    )}
+                <form className="row g-2 align-items-center" onSubmit={handleSearch}>
+                    <div className="col-12 col-sm-6 col-md-auto">
+                        <input
+                            type="text"
+                            className="form-control w-100"
+                            placeholder="Search by name..."
+                            value={nameFilter}
+                            onChange={(e) => setNameFilter(e.target.value)}
+                        />
+                    </div>
+                    <div className="col-12 col-sm-6 col-md-auto">
+                        <input
+                            type="text"
+                            className="form-control w-100"
+                            placeholder="City..."
+                            value={cityFilter}
+                            onChange={(e) => setCityFilter(e.target.value)}
+                        />
+                    </div>
+                    <div className="col-12 col-sm-6 col-md-auto">
+                        <select
+                            className="form-select w-100"
+                            value={specializationFilter}
+                            onChange={(e) => setSpecializationFilter(e.target.value)}
+                        >
+                            <option value="">All Specializations</option>
+                            <option value="Criminal Law">Criminal Law</option>
+                            <option value="Civil Law">Civil Law</option>
+                            <option value="Constitutional Law">Constitutional Law</option>
+                            <option value="Family Law">Family Law</option>
+                            <option value="Corporate Law">Corporate Law</option>
+                            <option value="Consumer Rights">Consumer Rights</option>
+                        </select>
+                    </div>
+                    <div className="col-12 col-sm-6 col-md-auto">
+                        <select
+                            className="form-select w-100"
+                            value={ratingFilter}
+                            onChange={(e) => setRatingFilter(Number(e.target.value))}
+                        >
+                            <option value="0">All Ratings</option>
+                            <option value="4">4+ Stars</option>
+                            <option value="3">3+ Stars</option>
+                        </select>
+                    </div>
+                    <div className="col-12 col-sm-6 col-md-auto">
+                        <select
+                            className="form-select w-100"
+                            value={sortFilter}
+                            onChange={(e) => handleSortChange(e.target.value)}
+                        >
+                            <option value="">Sort By: Default</option>
+                            <option value="fee_asc">Fee: Low to High</option>
+                            <option value="exp_desc">Experience: High to Low</option>
+                            <option value="rating_desc">Rating: High to Low</option>
+                        </select>
+                    </div>
+                    <div className="col-12 col-sm-6 col-md-auto d-flex gap-2">
+                        <button className="btn btn-primary flex-grow-1" type="submit">Search</button>
+                        {(cityFilter || ratingFilter > 0 || specializationFilter || sortFilter || nameFilter) && (
+                            <button className="btn btn-outline-secondary flex-grow-1" type="button" onClick={() => { setCityFilter(''); setRatingFilter(0); setSpecializationFilter(''); setSortFilter(''); setNameFilter(''); fetchLawyers('', 0, '', '', ''); }}>Clear</button>
+                        )}
+                    </div>
                 </form>
             </div>
 
@@ -221,8 +228,9 @@ export default function ConnectLawyerPage() {
                             <form onSubmit={handleBooking}>
                                 <div className="modal-body">
                                     <div className="mb-3">
-                                        <label className="form-label fw-bold">Select Date</label>
+                                        <label htmlFor="bookingDate" className="form-label fw-bold">Select Date</label>
                                         <input
+                                            id="bookingDate"
                                             type="date"
                                             className="form-control"
                                             required
@@ -232,8 +240,9 @@ export default function ConnectLawyerPage() {
                                         />
                                     </div>
                                     <div className="mb-3">
-                                        <label className="form-label fw-bold">Select Time Slot</label>
+                                        <label htmlFor="bookingTime" className="form-label fw-bold">Select Time Slot</label>
                                         <select
+                                            id="bookingTime"
                                             className="form-select"
                                             value={bookingData.timeSlot}
                                             onChange={(e) => setBookingData({ ...bookingData, timeSlot: e.target.value })}
@@ -247,8 +256,9 @@ export default function ConnectLawyerPage() {
                                         </select>
                                     </div>
                                     <div className="mb-3">
-                                        <label className="form-label fw-bold">Notes for Lawyer</label>
+                                        <label htmlFor="bookingNotes" className="form-label fw-bold">Notes for Lawyer</label>
                                         <textarea
+                                            id="bookingNotes"
                                             className="form-control"
                                             rows="3"
                                             placeholder="Briefly describe your legal concern..."

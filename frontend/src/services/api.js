@@ -109,7 +109,13 @@ class ApiService {
       }
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Something went wrong');
+        let errorMessage = data.detail || 'Something went wrong';
+        if (Array.isArray(data.detail)) {
+          errorMessage = data.detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join(', ');
+        } else if (typeof data.detail === 'object') {
+          errorMessage = JSON.stringify(data.detail);
+        }
+        throw new Error(errorMessage);
       }
 
       return data;
@@ -142,13 +148,12 @@ class ApiService {
     formData.append('phone', phone);
     formData.append('address', address);
     formData.append('city', city);
-    formData.append('lawyer_id_proof', lawyer_id_proof);
-    if (lawyer_proof_file) {
-      formData.append('lawyer_proof_file', lawyer_proof_file);
-    }
-    formData.append('consultation_fee', consultation_fee);
-    formData.append('specialization', specialization);
-    formData.append('years_of_experience', years_of_experience);
+
+    if (lawyer_id_proof) formData.append('lawyer_id_proof', lawyer_id_proof);
+    if (lawyer_proof_file) formData.append('lawyer_proof_file', lawyer_proof_file);
+    if (consultation_fee !== undefined && consultation_fee !== null) formData.append('consultation_fee', consultation_fee);
+    if (specialization) formData.append('specialization', specialization);
+    if (years_of_experience !== undefined && years_of_experience !== null) formData.append('years_of_experience', years_of_experience);
 
     return this.request('/register', {
       method: 'POST',
@@ -205,6 +210,26 @@ class ApiService {
 
   async searchTopics(query) {
     return this.request(`/topics/search/${query}`);
+  }
+
+  async addTopic(data) {
+    return this.request('/topics', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTopic(topicId, data) {
+    return this.request(`/topics/${topicId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTopic(topicId) {
+    return this.request(`/topics/${topicId}`, {
+      method: 'DELETE',
+    });
   }
 
   // Lawyer & Admin endpoints

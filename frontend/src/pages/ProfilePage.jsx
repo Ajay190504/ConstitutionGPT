@@ -149,20 +149,20 @@ export default function ProfilePage({ user, onLogout }) {
                       <form onSubmit={handleUpdateProfile}>
                         <div className="row g-3">
                           <div className="col-md-6">
-                            <label className="form-label small fw-bold">Phone Number</label>
-                            <input type="text" className="form-control" value={editData.phone} onChange={e => setEditData({ ...editData, phone: e.target.value })} />
+                            <label htmlFor="editPhone" className="form-label small fw-bold">Phone Number</label>
+                            <input id="editPhone" type="text" className="form-control" value={editData.phone} onChange={e => setEditData({ ...editData, phone: e.target.value })} />
                           </div>
                           <div className="col-md-6">
-                            <label className="form-label small fw-bold">City</label>
-                            <input type="text" className="form-control" value={editData.city} onChange={e => setEditData({ ...editData, city: e.target.value })} />
+                            <label htmlFor="editCity" className="form-label small fw-bold">City</label>
+                            <input id="editCity" type="text" className="form-control" value={editData.city} onChange={e => setEditData({ ...editData, city: e.target.value })} />
                           </div>
                           <div className="col-12">
-                            <label className="form-label small fw-bold">Office Address</label>
-                            <textarea className="form-control" rows="2" value={editData.address} onChange={e => setEditData({ ...editData, address: e.target.value })}></textarea>
+                            <label htmlFor="editAddress" className="form-label small fw-bold">Office Address</label>
+                            <textarea id="editAddress" className="form-control" rows="2" value={editData.address} onChange={e => setEditData({ ...editData, address: e.target.value })}></textarea>
                           </div>
                           <div className="col-md-6">
-                            <label className="form-label small fw-bold">Specialization</label>
-                            <select className="form-select" value={editData.specialization} onChange={e => setEditData({ ...editData, specialization: e.target.value })}>
+                            <label htmlFor="editSpecialization" className="form-label small fw-bold">Specialization</label>
+                            <select id="editSpecialization" className="form-select" value={editData.specialization} onChange={e => setEditData({ ...editData, specialization: e.target.value })}>
                               <option value="Criminal Law">Criminal Law</option>
                               <option value="Civil Law">Civil Law</option>
                               <option value="Family Law">Family Law</option>
@@ -172,12 +172,12 @@ export default function ProfilePage({ user, onLogout }) {
                             </select>
                           </div>
                           <div className="col-md-3">
-                            <label className="form-label small fw-bold">Exp (Years)</label>
-                            <input type="number" className="form-control" value={editData.years_of_experience} onChange={e => setEditData({ ...editData, years_of_experience: parseInt(e.target.value) })} />
+                            <label htmlFor="editYearsExp" className="form-label small fw-bold">Exp (Years)</label>
+                            <input id="editYearsExp" type="number" className="form-control" value={editData.years_of_experience} onChange={e => setEditData({ ...editData, years_of_experience: parseInt(e.target.value) })} />
                           </div>
                           <div className="col-md-3">
-                            <label className="form-label small fw-bold">Fee (₹)</label>
-                            <input type="number" className="form-control" value={editData.consultation_fee} onChange={e => setEditData({ ...editData, consultation_fee: parseFloat(e.target.value) })} />
+                            <label htmlFor="editConsultFee" className="form-label small fw-bold">Fee (₹)</label>
+                            <input id="editConsultFee" type="number" className="form-control" value={editData.consultation_fee} onChange={e => setEditData({ ...editData, consultation_fee: parseFloat(e.target.value) })} />
                           </div>
                           <div className="col-12 mt-4 d-flex gap-2">
                             <button type="submit" className="btn btn-primary" disabled={editLoading}> {editLoading ? 'Saving...' : 'Save Changes'} </button>
@@ -228,8 +228,9 @@ export default function ProfilePage({ user, onLogout }) {
 
               <form onSubmit={handleChangePassword}>
                 <div className="mb-3">
-                  <label className="form-label small fw-bold">Current Password</label>
+                  <label htmlFor="changePassCurrent" className="form-label small fw-bold">Current Password</label>
                   <input
+                    id="changePassCurrent"
                     type="password"
                     className="form-control"
                     required
@@ -240,8 +241,9 @@ export default function ProfilePage({ user, onLogout }) {
                 </div>
                 <div className="row">
                   <div className="col-sm-6 mb-3">
-                    <label className="form-label small fw-bold">New Password</label>
+                    <label htmlFor="changePassNew" className="form-label small fw-bold">New Password</label>
                     <input
+                      id="changePassNew"
                       type="password"
                       className="form-control"
                       required
@@ -251,8 +253,9 @@ export default function ProfilePage({ user, onLogout }) {
                     />
                   </div>
                   <div className="col-sm-6 mb-3">
-                    <label className="form-label small fw-bold">Confirm New Password</label>
+                    <label htmlFor="changePassConfirm" className="form-label small fw-bold">Confirm New Password</label>
                     <input
+                      id="changePassConfirm"
                       type="password"
                       className="form-control"
                       required

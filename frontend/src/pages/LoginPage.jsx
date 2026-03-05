@@ -38,25 +38,29 @@ export default function LoginPage({ onLogin }) {
         {error && <div className="alert alert-danger">{error}</div>}
         <form onSubmit={handleSubmit} className="needs-validation">
           <div className="mb-3">
-            <label className="form-label">Username</label>
+            <label htmlFor="loginUsername" className="form-label">Username</label>
             <input
+              id="loginUsername"
               type="text"
               className="form-control"
               placeholder="Enter Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
               disabled={loading}
               required
             />
           </div>
           <div className="mb-3">
-            <label className="form-label">Password</label>
+            <label htmlFor="loginPassword" className="form-label">Password</label>
             <input
+              id="loginPassword"
               type="password"
               className="form-control"
               placeholder="Enter Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
               disabled={loading}
               required
             />

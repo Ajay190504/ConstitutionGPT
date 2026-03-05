@@ -15,6 +15,8 @@ import InboxPage from "./pages/InboxPage";
 import MessagingPage from "./pages/MessagingPage";
 import MyAppointmentsPage from "./pages/MyAppointmentsPage";
 import LawyerAppointmentsPage from "./pages/LawyerAppointmentsPage";
+import TopicDetailsPage from "./pages/TopicDetailsPage";
+import TopicManagementPage from "./pages/TopicManagementPage";
 import ApiService from "./services/api";
 import "./App.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
@@ -28,12 +30,13 @@ const ProtectedRoute = ({ user, allowedRoles, children }) => {
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const userData = await ApiService.getCurrentUser();
-        setUser(userData);
+        setUser(userData?.user || userData); // Extract 'user' or fallback
       } catch (err) {
         setUser(null);
       } finally {
@@ -60,10 +63,26 @@ export default function App() {
     </Routes>
   ) : (
     <div className="app-shell">
-      <nav className="sidebar bg-dark text-white p-3 shadow">
-        <div className="brand mb-4 px-2">
-          <h4 className="text-primary fw-bold mb-0">ConstitutionGPT</h4>
-          <small className="text-white-50">Legal Intelligence</small>
+      {/* Overlay for mobile sidebar */}
+      {isSidebarOpen && (
+        <div
+          className="sidebar-overlay d-md-none"
+          onClick={() => setIsSidebarOpen(false)}
+        ></div>
+      )}
+      <nav className={`sidebar bg-dark text-white p-3 shadow ${isSidebarOpen ? 'open' : ''}`}>
+        <div className="brand mb-4 px-2 d-flex justify-content-between align-items-center">
+          <div>
+            <h4 className="text-primary fw-bold mb-0">ConstitutionGPT</h4>
+            <small className="text-white-50">Legal Intelligence</small>
+          </div>
+          <button
+            className="btn btn-sm btn-link text-white d-md-none"
+            onClick={() => setIsSidebarOpen(false)}
+            aria-label="Close sidebar"
+          >
+            <i className="bi bi-x-lg"></i>
+          </button>
         </div>
         <ul className="nav flex-column gap-1">
           <li className="nav-item">
@@ -74,6 +93,11 @@ export default function App() {
           <li className="nav-item">
             <Link className="nav-link text-white" to="/ask">
               <i className="bi bi-chat-dots-fill me-2"></i>Ask Question
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link className="nav-link text-white" to="/topics">
+              <i className="bi bi-search me-2"></i>Browse Topics
             </Link>
           </li>
           <li className="nav-item">
@@ -110,6 +134,14 @@ export default function App() {
             <li className="nav-item">
               <Link className="nav-link text-warning" to="/admin">
                 <i className="bi bi-shield-lock-fill me-2"></i>Admin Dashboard
+              </Link>
+            </li>
+          )}
+
+          {user?.role === "admin" && (
+            <li className="nav-item">
+              <Link className="nav-link text-warning" to="/admin/topics">
+                <i className="bi bi-gear-fill me-2"></i>Manage Topics
               </Link>
             </li>
           )}
@@ -153,7 +185,14 @@ export default function App() {
         </div>
       </nav>
       <main className="main">
-        <div className="header shadow-sm px-4">
+        <div className="header shadow-sm px-4 d-flex align-items-center">
+          <button
+            className="btn btn-outline-secondary me-3 d-md-none"
+            onClick={() => setIsSidebarOpen(true)}
+            aria-label="Open menu"
+          >
+            <i className="bi bi-list fs-5"></i>
+          </button>
           <h5 className="mb-0">
             {window.location.pathname.includes("/connect-lawyer")
               ? "Legal Marketplace"
@@ -181,6 +220,14 @@ export default function App() {
               element={
                 <ProtectedRoute user={user} allowedRoles={["admin", "moderator"]}>
                   <AdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/topics"
+              element={
+                <ProtectedRoute user={user} allowedRoles={["admin"]}>
+                  <TopicManagementPage />
                 </ProtectedRoute>
               }
             />

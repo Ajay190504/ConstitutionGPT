@@ -40,13 +40,13 @@ export default function RegisterPage({ onLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
-      setError('Please fill in all basic fields')
+    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword || !formData.phone || !formData.city || !formData.address) {
+      setError('Please fill in all mandatory fields (Username, Email, Phone, City, Address, and Password)')
       return
     }
 
-    if (formData.role === 'lawyer' && (!formData.phone || !formData.city || !formData.lawyer_id_proof || !formData.lawyer_proof_file || !formData.specialization)) {
-      setError('Please provide phone, city, specialization, ID number, and a document proof for lawyer registration')
+    if (formData.role === 'lawyer' && (!formData.lawyer_id_proof || !formData.lawyer_proof_file || !formData.specialization)) {
+      setError('Please provide specialization, ID number, and a document proof for lawyer registration')
       return
     }
 
@@ -97,7 +97,7 @@ export default function RegisterPage({ onLogin }) {
         {error && <div className="alert alert-danger">{error}</div>}
         <form onSubmit={handleSubmit} className="needs-validation">
           <div className="mb-3">
-            <label className="form-label fw-bold">Register as</label>
+            <div className="form-label fw-bold">Register as</div>
             <div className="d-flex gap-4">
               <div className="form-check">
                 <input className="form-check-input" type="radio" name="role" id="roleUser" value="user" checked={formData.role === 'user'} onChange={handleChange} />
@@ -112,27 +112,31 @@ export default function RegisterPage({ onLogin }) {
 
           <div className="row">
             <div className="col-md-6 mb-3">
-              <label className="form-label">Username</label>
+              <label htmlFor="regUsername" className="form-label">Username</label>
               <input
+                id="regUsername"
                 className={`form-control ${error && (!formData.username || error.toLowerCase().includes('username')) ? 'is-invalid' : ''}`}
                 name="username"
                 placeholder="Enter Username"
                 value={formData.username}
                 onChange={handleChange}
+                autoComplete="username"
                 disabled={loading}
                 required
               />
               <div className="invalid-feedback">{error.toLowerCase().includes('username') ? error : 'Username is required'}</div>
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label">Email Address</label>
+              <label htmlFor="regEmail" className="form-label">Email Address</label>
               <input
+                id="regEmail"
                 type="email"
                 className={`form-control ${error && (!formData.email || !formData.email.includes('@') || error.toLowerCase().includes('email')) ? 'is-invalid' : ''}`}
                 name="email"
                 placeholder="yourname@example.com"
                 value={formData.email}
                 onChange={handleChange}
+                autoComplete="email"
                 disabled={loading}
                 required
               />
@@ -140,34 +144,59 @@ export default function RegisterPage({ onLogin }) {
             </div>
           </div>
 
+          {/* Common Contact Fields (Mandatory for all) */}
+          <div className="row">
+            <div className="col-md-6 mb-3">
+              <label htmlFor="regPhone" className="form-label">Phone Number</label>
+              <input
+                id="regPhone"
+                className={`form-control ${error && !formData.phone ? 'is-invalid' : ''}`}
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                autoComplete="tel"
+                disabled={loading}
+                placeholder="e.g. +91 9876543210"
+                required
+              />
+              <div className="invalid-feedback">Phone number is required</div>
+            </div>
+            <div className="col-md-6 mb-3">
+              <label htmlFor="regCity" className="form-label">City</label>
+              <input
+                id="regCity"
+                className={`form-control ${error && !formData.city ? 'is-invalid' : ''}`}
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+                autoComplete="address-level2"
+                disabled={loading}
+                placeholder="e.g. New Delhi"
+                required
+              />
+              <div className="invalid-feedback">City is required</div>
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <label htmlFor="regAddress" className="form-label">Home/Office Address</label>
+            <textarea
+              id="regAddress"
+              className={`form-control ${error && !formData.address ? 'is-invalid' : ''}`}
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              autoComplete="street-address"
+              disabled={loading}
+              rows="2"
+              placeholder="Enter your full address"
+              required
+            ></textarea>
+            <div className="invalid-feedback">Address is required</div>
+          </div>
+
           {formData.role === 'lawyer' && (
             <div className="lawyer-fields animate__animated animate__fadeIn p-3 bg-light rounded mb-3 border">
-              <div className="mb-3">
-                <label className="form-label">Phone Number</label>
-                <input
-                  className={`form-control ${error && !formData.phone ? 'is-invalid' : ''}`}
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  disabled={loading}
-                  placeholder="e.g. +91 9876543210"
-                  required
-                />
-                <div className="invalid-feedback">Phone number is required for lawyers</div>
-              </div>
-              <div className="mb-3">
-                <label className="form-label">Practicing City</label>
-                <input
-                  className={`form-control ${error && !formData.city ? 'is-invalid' : ''}`}
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  disabled={loading}
-                  placeholder="e.g. New Delhi"
-                  required
-                />
-                <div className="invalid-feedback">City is required for lawyers</div>
-              </div>
               <div className="mb-3">
                 <label className="form-label">Bar Council ID / Legal License</label>
                 <input
@@ -179,7 +208,7 @@ export default function RegisterPage({ onLogin }) {
                   placeholder="Enter your legal license number"
                   required
                 />
-                <div className="invalid-feedback">Field is required</div>
+                <div className="invalid-feedback">License field is required</div>
               </div>
               <div className="row">
                 <div className="col-md-4 mb-3">
@@ -192,6 +221,7 @@ export default function RegisterPage({ onLogin }) {
                     onChange={handleChange}
                     disabled={loading}
                     placeholder="e.g. 500"
+                    required
                   />
                 </div>
                 <div className="col-md-4 mb-3">
@@ -204,6 +234,7 @@ export default function RegisterPage({ onLogin }) {
                     onChange={handleChange}
                     disabled={loading}
                     placeholder="e.g. 5"
+                    required
                   />
                 </div>
                 <div className="col-md-4 mb-3">
@@ -227,7 +258,7 @@ export default function RegisterPage({ onLogin }) {
                   <div className="invalid-feedback">Specialization is required</div>
                 </div>
               </div>
-              <div className="mb-3">
+              <div className="mb-0">
                 <label className="form-label">Upload ID Card / Proof (Image or PDF)</label>
                 <input
                   type="file"
@@ -241,45 +272,37 @@ export default function RegisterPage({ onLogin }) {
                 <div className="invalid-feedback">Document proof is required</div>
                 <small className="text-muted">Max size: 5MB</small>
               </div>
-              <div className="mb-3">
-                <label className="form-label">Office Address</label>
-                <textarea
-                  className="form-control"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  disabled={loading}
-                  rows="2"
-                  placeholder="Enter your full office address"
-                ></textarea>
-              </div>
             </div>
           )}
 
           <div className="row">
             <div className="col-md-6 mb-3">
-              <label className="form-label">Password</label>
+              <label htmlFor="regPassword" className="form-label">Password</label>
               <input
+                id="regPassword"
                 type="password"
                 className={`form-control ${error && (validatePassword(formData.password)) ? 'is-invalid' : ''}`}
                 name="password"
                 placeholder="Enter Password"
                 value={formData.password}
                 onChange={handleChange}
+                autoComplete="new-password"
                 disabled={loading}
                 required
               />
               <div className="invalid-feedback">{validatePassword(formData.password) || 'Password is required'}</div>
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label">Confirm Password</label>
+              <label htmlFor="regConfirmPassword" className="form-label">Confirm Password</label>
               <input
+                id="regConfirmPassword"
                 type="password"
                 className={`form-control ${error && (formData.password !== formData.confirmPassword) ? 'is-invalid' : ''}`}
                 name="confirmPassword"
                 placeholder="Re-enter password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                autoComplete="new-password"
                 disabled={loading}
                 required
               />
