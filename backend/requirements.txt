@@ -7,7 +7,6 @@ pymongo
 bcrypt
 PyJWT
 chromadb
-sentence-transformers
 langchain-text-splitters
 python-multipart
 gTTS

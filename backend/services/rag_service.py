@@ -13,16 +13,15 @@ class RAGService:
             
         try:
             import chromadb
-            from chromadb.utils import embedding_functions
             
             # Initialize persistent client
             db_path = os.path.join(os.path.dirname(__file__), "..", "chroma_db")
             client = chromadb.PersistentClient(path=db_path)
             
-            # Using a free, local embedding function
-            cls._embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-                model_name="all-MiniLM-L6-v2"
-            )
+            # Using the default lightweight embedding function provided by ChromaDB
+            # This avoids loading the massive sentence-transformers torch library
+            from chromadb.utils import embedding_functions
+            cls._embedding_function = embedding_functions.DefaultEmbeddingFunction()
             
             cls._collection = client.get_or_create_collection(
                 name="indian_constitution",
