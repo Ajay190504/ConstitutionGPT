@@ -90,3 +90,6 @@ htmlcov/
 # Gemini/Antigravity artifacts
 .gemini/
 brain/
+
+# Vercel
+.vercel/
