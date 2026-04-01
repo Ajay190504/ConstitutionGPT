@@ -22,6 +22,8 @@ lawyer_chat_collection = db["lawyer_chats"]
 refresh_tokens_collection = db["refresh_tokens"]
 reviews_collection = db["reviews"]
 appointments_collection = db["appointments"]
+queries_collection = db["queries"]
+notifications_collection = db["notifications"]
 
 class User:
     def __init__(self, username: str, email: str, password: str, role: str = "user", phone: str = None, address: str = None, city: str = None, lawyer_id_proof: str = None, lawyer_proof_file: str = None, consultation_fee: float = 0.0, specialization: str = None, years_of_experience: int = 0):
@@ -82,4 +84,19 @@ class Review:
         self.lawyer_id = lawyer_id
         self.rating = rating  # 1-5
         self.comment = comment
+        self.created_at = datetime.utcnow()
+
+class UserQuery:
+    def __init__(self, user_id: str, subject: str, message: str):
+        self.user_id = user_id
+        self.subject = subject
+        self.message = message
+        self.status = "pending" # pending, resolved, dismissed
+        self.created_at = datetime.utcnow()
+
+class Notification:
+    def __init__(self, user_id: str, message: str):
+        self.user_id = user_id
+        self.message = message
+        self.is_read = False
         self.created_at = datetime.utcnow()

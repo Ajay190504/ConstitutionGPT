@@ -7,6 +7,11 @@ export default function AdminPage() {
     const [error, setError] = useState('')
     const [actionLoading, setActionLoading] = useState(null)
 
+    const [activeTab, setActiveTab] = useState('lawyers')
+    const [queries, setQueries] = useState([])
+    const [queriesLoading, setQueriesLoading] = useState(false)
+    const [queriesError, setQueriesError] = useState('')
+
     const fetchAllLawyers = async () => {
         setLoading(true)
         try {
@@ -19,9 +24,25 @@ export default function AdminPage() {
         }
     }
 
+    const fetchAllQueries = async () => {
+        setQueriesLoading(true)
+        try {
+            const data = await ApiService.adminGetQueries()
+            setQueries(data.queries)
+        } catch (err) {
+            setQueriesError('Failed to load user queries')
+        } finally {
+            setQueriesLoading(false)
+        }
+    }
+
     useEffect(() => {
-        fetchAllLawyers()
-    }, [])
+        if (activeTab === 'lawyers') {
+            fetchAllLawyers()
+        } else if (activeTab === 'queries') {
+            fetchAllQueries()
+        }
+    }, [activeTab])
 
     const handleToggleVerify = async (lawyerId, currentStatus) => {
         setActionLoading(lawyerId)
@@ -33,18 +54,48 @@ export default function AdminPage() {
         } finally {
             setActionLoading(null)
         }
+    const handleResolveQuery = async (queryId, newStatus) => {
+        setActionLoading(queryId)
+        try {
+            await ApiService.adminUpdateQueryStatus(queryId, newStatus)
+            setQueries(queries.map(q => q.id === queryId ? { ...q, status: newStatus } : q))
+        } catch (err) {
+            alert('Failed to update query status')
+        } finally {
+            setActionLoading(null)
+        }
     }
 
-    if (loading) return <div className="p-5 text-center"><div className="spinner-border"></div></div>
+    if (loading && activeTab === 'lawyers') return <div className="p-5 text-center"><div className="spinner-border"></div></div>
+    if (queriesLoading && activeTab === 'queries') return <div className="p-5 text-center"><div className="spinner-border"></div></div>
 
     return (
         <div className="container py-4">
-            <div className="card shadow-sm border-0" style={{ borderRadius: '15px' }}>
-                <div className="card-header bg-white py-3 border-0">
-                    <h3 className="mb-0">Admin: Lawyer Verification</h3>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h3 className="mb-0">Admin Dashboard</h3>
+                <div className="btn-group shadow-sm">
+                    <button 
+                        className={`btn ${activeTab === 'lawyers' ? 'btn-primary' : 'btn-outline-primary'}`}
+                        onClick={() => setActiveTab('lawyers')}
+                    >
+                        Lawyer Verification
+                    </button>
+                    <button 
+                        className={`btn ${activeTab === 'queries' ? 'btn-primary' : 'btn-outline-primary'}`}
+                        onClick={() => setActiveTab('queries')}
+                    >
+                        User Requests
+                    </button>
                 </div>
-                <div className="card-body">
-                    {error && <div className="alert alert-danger">{error}</div>}
+            </div>
+
+            {activeTab === 'lawyers' && (
+                <div className="card shadow-sm border-0" style={{ borderRadius: '15px' }}>
+                    <div className="card-header bg-white py-3 border-0">
+                        <h5 className="mb-0 text-muted">Lawyer Registration Approvals</h5>
+                    </div>
+                    <div className="card-body">
+                        {error && <div className="alert alert-danger">{error}</div>}
 
                     <div className="table-responsive">
                         <table className="table table-hover align-middle">
@@ -117,6 +168,74 @@ export default function AdminPage() {
                     </div>
                 </div>
             </div>
+            )}
+
+            {activeTab === 'queries' && (
+                <div className="card shadow-sm border-0" style={{ borderRadius: '15px' }}>
+                    <div className="card-header bg-white py-3 border-0">
+                        <h5 className="mb-0 text-muted">User Requests and Queries</h5>
+                    </div>
+                    <div className="card-body">
+                        {queriesError && <div className="alert alert-danger">{queriesError}</div>}
+                        
+                        <div className="row g-4">
+                            {queries.length > 0 ? queries.map(query => (
+                                <div className="col-md-6 col-lg-4" key={query.id}>
+                                    <div className="card h-100 border-0 shadow-sm" style={{ borderLeft: `5px solid ${query.status === 'resolved' ? '#198754' : query.status === 'dismissed' ? '#dc3545' : '#ffc107'}`, borderRadius: '10px' }}>
+                                        <div className="card-body p-4">
+                                            <div className="d-flex justify-content-between mb-2">
+                                                <span className={`badge ${query.status === 'resolved' ? 'bg-success' : query.status === 'dismissed' ? 'bg-danger' : 'bg-warning text-dark'}`}>
+                                                    {query.status.toUpperCase()}
+                                                </span>
+                                                <small className="text-muted">{new Date(query.created_at).toLocaleDateString()}</small>
+                                            </div>
+                                            <h5 className="card-title fw-bold mb-1">{query.subject}</h5>
+                                            <p className="small text-primary mb-3">From: {query.username} ({query.email})</p>
+                                            
+                                            <div className="bg-light p-3 rounded mb-3" style={{ minHeight: '80px' }}>
+                                                <p className="card-text small mb-0">{query.message}</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="card-footer bg-white border-0 p-4 pt-0 d-flex gap-2">
+                                            {query.status === 'pending' ? (
+                                                <>
+                                                    <button 
+                                                        className="btn btn-sm btn-success flex-grow-1 fw-bold"
+                                                        onClick={() => handleResolveQuery(query.id, 'resolved')}
+                                                        disabled={actionLoading === query.id}
+                                                    >
+                                                        {actionLoading === query.id ? '...' : <><i className="bi bi-check-circle me-1"></i> Resolve</>}
+                                                    </button>
+                                                    <button 
+                                                        className="btn btn-sm btn-outline-danger flex-grow-1 fw-bold"
+                                                        onClick={() => handleResolveQuery(query.id, 'dismissed')}
+                                                        disabled={actionLoading === query.id}
+                                                    >
+                                                        {actionLoading === query.id ? '...' : <><i className="bi bi-x-circle me-1"></i> Dismiss</>}
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <button 
+                                                    className="btn btn-sm btn-outline-secondary w-100 fw-bold"
+                                                    disabled
+                                                >
+                                                    Record {query.status.charAt(0).toUpperCase() + query.status.slice(1)}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )) : (
+                                <div className="col-12 py-5 text-center text-muted">
+                                    <i className="bi bi-inbox display-4 mb-3 d-block"></i>
+                                    <h5>No user queries found.</h5>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

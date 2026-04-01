@@ -31,6 +31,9 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -45,6 +48,36 @@ export default function App() {
     };
     checkAuth();
   }, []);
+
+  const fetchNotifications = async () => {
+    if (!user) return;
+    try {
+      const data = await ApiService.getNotifications();
+      setNotifications(data.notifications || []);
+      setUnreadCount((data.notifications || []).filter(n => !n.is_read).length);
+    } catch (err) {
+      console.error('Failed to fetch notifications', err);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      const intervalId = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(intervalId);
+    }
+  }, [user]);
+
+  const handleNotificationClick = async (notif) => {
+    if (!notif.is_read) {
+      try {
+        await ApiService.markNotificationRead(notif.id);
+        fetchNotifications();
+      } catch (err) {
+        console.error('Failed to mark notification read', err);
+      }
+    }
+  };
 
   const handleLogout = () => {
     ApiService.logout();
@@ -185,27 +218,92 @@ export default function App() {
         </div>
       </nav>
       <main className="main">
-        <div className="header shadow-sm px-4 d-flex align-items-center">
-          <button
-            className="btn btn-outline-secondary me-3 d-md-none"
-            onClick={() => setIsSidebarOpen(true)}
-            aria-label="Open menu"
-          >
-            <i className="bi bi-list fs-5"></i>
-          </button>
-          <h5 className="mb-0">
-            {window.location.pathname.includes("/connect-lawyer")
-              ? "Legal Marketplace"
-              : window.location.pathname.includes("/admin")
-                ? "Administration"
-                : window.location.pathname.includes("/chat")
-                  ? "Messaging"
-                  : window.location.pathname.includes("/inbox")
-                    ? "Inbox"
-                    : `Welcome back, ${user?.username}`}
-          </h5>
+        <div className="header shadow-sm px-4 d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center">
+            <button
+              className="btn btn-outline-secondary me-3 d-md-none"
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label="Open menu"
+            >
+              <i className="bi bi-list fs-5"></i>
+            </button>
+            <h5 className="mb-0">
+              {window.location.pathname.includes("/connect-lawyer")
+                ? "Legal Marketplace"
+                : window.location.pathname.includes("/admin")
+                  ? "Administration"
+                  : window.location.pathname.includes("/chat")
+                    ? "Messaging"
+                    : window.location.pathname.includes("/inbox")
+                      ? "Inbox"
+                      : `Welcome back, ${user?.username}`}
+            </h5>
+          </div>
+
+          {/* Notifications Dropdown */}
+          <div className="position-relative ms-auto dropdown">
+            <button 
+              className="btn btn-light position-relative rounded-circle p-2 d-flex align-items-center justify-content-center border"
+              style={{ width: '40px', height: '40px' }}
+              onClick={() => setShowNotifications(!showNotifications)}
+            >
+              <i className="bi bi-bell-fill text-secondary"></i>
+              {unreadCount > 0 && (
+                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.65rem' }}>
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {showNotifications && (
+              <div 
+                className="dropdown-menu dropdown-menu-end show shadow-lg border-0 mt-2 p-0" 
+                style={{ width: '320px', zIndex: 1050, position: 'absolute', right: 0 }}
+              >
+                <div className="bg-primary text-white p-3 rounded-top d-flex justify-content-between align-items-center">
+                  <h6 className="mb-0 fw-bold">Notifications</h6>
+                  {unreadCount > 0 && <span className="badge bg-light text-primary">{unreadCount} New</span>}
+                </div>
+                <div className="list-group list-group-flush" style={{ maxHeight: '350px', overflowY: 'auto' }}>
+                  {notifications.length > 0 ? notifications.map(notif => (
+                    <button 
+                      key={notif.id} 
+                      className={`list-group-item list-group-item-action p-3 border-bottom ${!notif.is_read ? 'bg-light' : ''}`}
+                      onClick={() => handleNotificationClick(notif)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="d-flex w-100 justify-content-between mb-1">
+                        <small className={!notif.is_read ? 'fw-bold text-dark' : 'text-secondary'}>System Alert</small>
+                        <small className="text-muted" style={{ fontSize: '0.7rem' }}>
+                          {new Date(notif.created_at).toLocaleDateString()}
+                        </small>
+                      </div>
+                      <p className={`mb-0 small ${!notif.is_read ? 'fw-medium text-dark' : 'text-muted'}`}>
+                        {notif.message}
+                      </p>
+                    </button>
+                  )) : (
+                    <div className="p-4 text-center text-muted">
+                        <i className="bi bi-bell-slash fs-3 mb-2 d-block text-secondary opacity-50"></i>
+                        <p className="mb-0 small">You have no notifications right now.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        <div className="content-area p-4">
+        
+        {/* Click outside to close notifications */}
+        {showNotifications && (
+          <div 
+            className="position-fixed top-0 start-0 w-100 h-100" 
+            style={{ zIndex: 1040 }} 
+            onClick={() => setShowNotifications(false)}
+          ></div>
+        )}
+        
+        <div className="content-area p-4 position-relative" style={{ zIndex: 1 }}>
           <Routes>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/ask" element={<AskPage />} />

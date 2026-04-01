@@ -135,6 +135,31 @@ class TopicsService:
             return None
     
     @staticmethod
+    def search_topics(query: str) -> List[Dict]:
+        import re
+        safe_query = re.escape(query)
+        regex = re.compile(f".*{safe_query}.*", re.IGNORECASE)
+        search_query = {
+            "$or": [
+                {"title": regex},
+                {"description": regex},
+                {"content": regex}
+            ]
+        }
+        topics = topics_collection.find(search_query).sort("title", 1)
+        
+        return [
+            {
+                "id": str(topic["_id"]),
+                "title": topic["title"],
+                "description": topic["description"],
+                "content": topic["content"],
+                "created_at": topic["created_at"]
+            }
+            for topic in topics
+        ]
+    
+    @staticmethod
     def add_topic(title: str, description: str, content: str) -> Dict:
         topic = Topic(title, description, content)
         topic_doc = {

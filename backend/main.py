@@ -169,6 +169,10 @@ class TopicRequest(BaseModel):
     description: str
     content: str
 
+class UserQueryRequest(BaseModel):
+    subject: str
+    message: str
+
 # Dependency to verify JWT token
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     from database import users_collection
@@ -796,6 +800,102 @@ async def update_appointment_status(appointment_id: str, req: StatusUpdateReques
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Appointment not found")
     return {"success": True, "message": f"Status updated to {req.status}"}
+
+# User Queries (to Admin)
+@app.post("/queries")
+async def submit_query(req: UserQueryRequest, current_user: dict = Depends(get_current_user)):
+    from database import queries_collection, UserQuery
+    new_query = UserQuery(current_user["user_id"], req.subject, req.message)
+    query_doc = {
+        "user_id": new_query.user_id,
+        "subject": new_query.subject,
+        "message": new_query.message,
+        "status": new_query.status,
+        "created_at": new_query.created_at
+    }
+    result = queries_collection.insert_one(query_doc)
+    return {"success": True, "query_id": str(result.inserted_id)}
+
+@app.get("/admin/queries")
+async def admin_get_queries(current_user: dict = Depends(check_role(["admin", "moderator"]))):
+    from database import queries_collection, users_collection
+    from bson import ObjectId
+    queries = []
+    for q in queries_collection.find().sort("created_at", -1):
+        user = users_collection.find_one({"_id": ObjectId(q["user_id"])})
+        queries.append({
+            "id": str(q["_id"]),
+            "user_id": q["user_id"],
+            "username": user["username"] if user else "Unknown User",
+            "email": user["email"] if user else "Unknown Email",
+            "subject": q["subject"],
+            "message": q["message"],
+            "status": q.get("status", "pending"),
+            "created_at": q["created_at"].isoformat() if q.get("created_at") else None
+        })
+    return {"queries": queries}
+
+@app.put("/admin/queries/{query_id}/status")
+async def update_query_status(query_id: str, req: StatusUpdateRequest, current_user: dict = Depends(check_role(["admin", "moderator"]))):
+    from database import queries_collection, notifications_collection, Notification
+    from bson import ObjectId
+    
+    if req.status not in ["pending", "resolved", "dismissed"]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+        
+    query = queries_collection.find_one({"_id": ObjectId(query_id)})
+    if not query:
+        raise HTTPException(status_code=404, detail="Query not found")
+        
+    result = queries_collection.update_one(
+        {"_id": ObjectId(query_id)},
+        {"$set": {"status": req.status}}
+    )
+    
+    if result.modified_count > 0 and req.status in ["resolved", "dismissed"]:
+        notification_msg = f"Your request regarding '{query['subject']}' has been marked as {req.status} by an admin."
+        new_notif = Notification(query["user_id"], notification_msg)
+        notif_doc = {
+            "user_id": new_notif.user_id,
+            "message": new_notif.message,
+            "is_read": new_notif.is_read,
+            "created_at": new_notif.created_at
+        }
+        notifications_collection.insert_one(notif_doc)
+        
+    return {"success": True, "message": f"Query status updated to {req.status}"}
+
+# Notifications
+@app.get("/notifications")
+async def get_notifications(current_user: dict = Depends(get_current_user)):
+    from database import notifications_collection
+    
+    notifications = []
+    # Get last 20 notifications for user
+    for n in notifications_collection.find({"user_id": current_user["user_id"]}).sort("created_at", -1).limit(20):
+        notifications.append({
+            "id": str(n["_id"]),
+            "message": n["message"],
+            "is_read": n.get("is_read", False),
+            "created_at": n["created_at"].isoformat() if n.get("created_at") else None
+        })
+        
+    return {"notifications": notifications}
+
+@app.put("/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: str, current_user: dict = Depends(get_current_user)):
+    from database import notifications_collection
+    from bson import ObjectId
+    
+    result = notifications_collection.update_one(
+        {"_id": ObjectId(notification_id), "user_id": current_user["user_id"]},
+        {"$set": {"is_read": True}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Notification not found")
+        
+    return {"success": True, "message": "Notification marked as read"}
 
 # Speech & Translation endpoints
 class SpeechRequest(BaseModel):

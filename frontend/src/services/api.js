@@ -329,6 +329,36 @@ class ApiService {
       body: JSON.stringify({ status }),
     });
   }
+
+  // User Queries (to Admin)
+  async submitQuery(subject, message) {
+    return this.request('/queries', {
+      method: 'POST',
+      body: JSON.stringify({ subject, message }),
+    });
+  }
+
+  async adminGetQueries() {
+    return this.request('/admin/queries');
+  }
+
+  async adminUpdateQueryStatus(queryId, status) {
+    return this.request(`/admin/queries/${queryId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  // Notifications
+  async getNotifications() {
+    return this.request('/notifications');
+  }
+
+  async markNotificationRead(notificationId) {
+    return this.request(`/notifications/${notificationId}/read`, {
+      method: 'PUT',
+    });
+  }
 }
 
 if (!API_BASE_URL) {

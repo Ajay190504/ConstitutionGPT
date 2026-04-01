@@ -209,7 +209,11 @@ export default function ConnectLawyerPage() {
                         <div className="col-12 text-center py-5">
                             <div className="text-muted">
                                 <i className="bi bi-search" style={{ fontSize: '3rem' }}></i>
-                                <p className="mt-3 fs-5">No verified lawyers found in this city yet.</p>
+                                <p className="mt-3 fs-5">
+                                    {(cityFilter || nameFilter || specializationFilter || ratingFilter > 0) 
+                                        ? 'No verified lawyers found matching your search criteria.' 
+                                        : 'No verified lawyers found yet.'}
+                                </p>
                             </div>
                         </div>
                     )}

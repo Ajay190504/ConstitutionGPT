@@ -1,6 +1,33 @@
-import React from 'react'
+import { useState } from 'react'
+import ApiService from '../services/api'
 
 export default function HelpPage() {
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!subject.trim() || !message.trim()) {
+      setErrorMsg('Please fill out both subject and message.');
+      return;
+    }
+    setIsSubmitting(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      await ApiService.submitQuery(subject, message);
+      setSuccessMsg('Your request has been submitted successfully to the admin team!');
+      setSubject('');
+      setMessage('');
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to submit the request. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
   const sections = [
     {
       title: '🎙️ Voice AI Assistant',
@@ -42,12 +69,50 @@ export default function HelpPage() {
             ))}
           </div>
 
-          <div className="card border-0 shadow-sm bg-primary text-white p-4" style={{ borderRadius: '15px' }}>
-            <div className="card-body text-center">
-              <h4 className="fw-bold mb-3">Still have questions?</h4>
-              <p className="mb-4">Our support team is available for technical assistance.</p>
-              <a href="mailto:support@constitutiongpt.in" className="btn btn-light px-4 fw-bold text-primary">Contact Support</a>
+          <div className="card shadow-sm mb-5" style={{ borderRadius: '15px' }}>
+            <div className="card-header bg-primary text-white p-4" style={{ borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
+              <h4 className="fw-bold mb-1">Send a Request / Query</h4>
+              <p className="mb-0 text-white-50">Want a new blog post? Have a feature request? Let our admin know!</p>
             </div>
+            <div className="card-body p-4">
+              {successMsg && <div className="alert alert-success">{successMsg}</div>}
+              {errorMsg && <div className="alert alert-danger">{errorMsg}</div>}
+              
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label htmlFor="subject" className="form-label fw-bold">Subject</label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    id="subject" 
+                    placeholder="E.g., Suggestion for a blog post"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="message" className="form-label fw-bold">Message</label>
+                  <textarea 
+                    className="form-control" 
+                    id="message" 
+                    rows="4" 
+                    placeholder="Describe your query or request here..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    required
+                  ></textarea>
+                </div>
+                <button type="submit" className="btn btn-primary px-4 fw-bold" disabled={isSubmitting}>
+                  {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div className="text-center mt-4">
+            <p className="mb-1">Our support team is also available via email.</p>
+            <a href="mailto:support@constitutiongpt.in" className="btn btn-outline-secondary btn-sm px-3 fw-bold">Contact Support Alternatively</a>
           </div>
 
           <div className="mt-5 pt-4 text-center border-top">
