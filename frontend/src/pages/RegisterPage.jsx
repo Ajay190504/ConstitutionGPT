@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import ApiService from '../services/api'
 
-export default function RegisterPage({ onLogin }) {
+export default function RegisterPage() {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -79,9 +81,8 @@ export default function RegisterPage({ onLogin }) {
         formData.specialization,
         Number(formData.years_of_experience)
       )
-      // Auto-login after successful registration
-      const loginResponse = await ApiService.login(formData.username, formData.password)
-      onLogin(loginResponse.user)
+      alert("Registration successful! Please login to continue.")
+      navigate('/login')
     } catch (err) {
       setError(err.message || 'Registration failed')
     } finally {
