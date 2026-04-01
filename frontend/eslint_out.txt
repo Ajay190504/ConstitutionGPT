@@ -1,0 +1,37 @@
+Need to install the following packages:
+eslint@10.1.0
+Ok to proceed? (y) 
+npm warn cleanup Failed to remove some directories [
+npm warn cleanup   [
+npm warn cleanup     '\\\\?\\C:\\Users\\ajayw\\AppData\\Local\\npm-cache\\_npx\\515228b7c8d004a2\\node_modules\\@eslint\\plugin-kit',
+npm warn cleanup     [Error: EPERM: operation not permitted, rmdir 'C:\Users\ajayw\AppData\Local\npm-cache\_npx\515228b7c8d004a2\node_modules\@eslint\plugin-kit\dist'] {
+npm warn cleanup       errno: -4048,
+npm warn cleanup       code: 'EPERM',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: 'C:\\Users\\ajayw\\AppData\\Local\\npm-cache\\_npx\\515228b7c8d004a2\\node_modules\\@eslint\\plugin-kit\\dist'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '\\\\?\\C:\\Users\\ajayw\\AppData\\Local\\npm-cache\\_npx\\515228b7c8d004a2\\node_modules\\@eslint-community\\eslint-utils',
+npm warn cleanup     [Error: EPERM: operation not permitted, rmdir 'C:\Users\ajayw\AppData\Local\npm-cache\_npx\515228b7c8d004a2\node_modules\@eslint-community\eslint-utils'] {
+npm warn cleanup       errno: -4048,
+npm warn cleanup       code: 'EPERM',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: 'C:\\Users\\ajayw\\AppData\\Local\\npm-cache\\_npx\\515228b7c8d004a2\\node_modules\\@eslint-community\\eslint-utils'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '\\\\?\\C:\\Users\\ajayw\\AppData\\Local\\npm-cache\\_npx\\515228b7c8d004a2\\node_modules',
+npm warn cleanup     [Error: EPERM: operation not permitted, rmdir 'C:\Users\ajayw\AppData\Local\npm-cache\_npx\515228b7c8d004a2\node_modules\@eslint\config-array'] {
+npm warn cleanup       errno: -4048,
+npm warn cleanup       code: 'EPERM',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: 'C:\\Users\\ajayw\\AppData\\Local\\npm-cache\\_npx\\515228b7c8d004a2\\node_modules\\@eslint\\config-array'
+npm warn cleanup     }
+npm warn cleanup   ]
+npm warn cleanup ]
+npm error process terminated
+npm error signal SIGINT
+npm error A complete log of this run can be found in: C:\Users\ajayw\AppData\Local\npm-cache\_logs\2026-04-01T03_44_54_754Z-debug-0.log
+Terminate batch job (Y/N)? 
+^C

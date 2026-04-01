@@ -54,6 +54,8 @@ export default function AdminPage() {
         } finally {
             setActionLoading(null)
         }
+    }
+
     const handleResolveQuery = async (queryId, newStatus) => {
         setActionLoading(queryId)
         try {
