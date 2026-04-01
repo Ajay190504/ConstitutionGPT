@@ -636,6 +636,12 @@ async def send_message(
 async def get_messages(other_id: str, current_user: dict = Depends(get_current_user)):
     from database import lawyer_chat_collection
     
+    # Mark messages from other_user to current_user as read
+    lawyer_chat_collection.update_many(
+        {"sender_id": other_id, "receiver_id": current_user["user_id"], "is_read": False},
+        {"$set": {"is_read": True}}
+    )
+    
     # Get messages where current_user is either sender or receiver
     query = {
         "$or": [

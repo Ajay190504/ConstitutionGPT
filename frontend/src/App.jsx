@@ -70,11 +70,16 @@ export default function App() {
 
   const handleNotificationClick = async (notif) => {
     if (!notif.is_read) {
+      // Optimistic upate so the count drops immediately
+      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      
       try {
         await ApiService.markNotificationRead(notif.id);
-        fetchNotifications();
       } catch (err) {
         console.error('Failed to mark notification read', err);
+        // Fallback: refetch if it failed
+        fetchNotifications();
       }
     }
   };
