@@ -12,3 +12,4 @@ python-multipart
 gTTS
 SpeechRecognition
 googletrans-py
+google-cloud-storage

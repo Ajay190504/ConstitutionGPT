@@ -132,7 +132,7 @@ export default function AdminPage() {
                                         <td>
                                             {lawyer.lawyer_proof_file ? (
                                                 <a
-                                                    href={`${ApiService.baseURL}/uploads/${lawyer.lawyer_proof_file}`}
+                                                    href={lawyer.lawyer_proof_file.startsWith('http') ? lawyer.lawyer_proof_file : `${ApiService.baseURL}/uploads/${lawyer.lawyer_proof_file}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="btn btn-sm btn-link p-0"

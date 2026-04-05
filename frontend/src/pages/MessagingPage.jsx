@@ -121,7 +121,7 @@ export default function MessagingPage() {
                                                 <div className="overflow-hidden">
                                                     <div className="text-truncate fw-bold small">{msg.file_name}</div>
                                                     <a
-                                                        href={`${ApiService.baseURL.replace('/api', '')}${msg.file_url}`}
+                                                        href={msg.file_url.startsWith('http') ? msg.file_url : `${ApiService.baseURL.replace('/api', '')}${msg.file_url}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className={`small ${isMe ? 'text-white' : 'text-primary'} text-decoration-none`}

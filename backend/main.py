@@ -17,6 +17,7 @@ from services.chat_service import ChatService
 from services.topics_service import TopicsService
 from services.rag_service import RAGService
 from services.speech_service import SpeechService
+from services.gcs_service import GCSService
 
 load_dotenv()
 
@@ -239,10 +240,16 @@ async def register(
     # Handle file upload if lawyer
     proof_filename = None
     if role == "lawyer" and lawyer_proof_file:
-        filename = f"{int(time.time())}_{lawyer_proof_file.filename}"
-        with open(f"uploads/lawyer_proofs/{filename}", "wb") as f:
-            f.write(await lawyer_proof_file.read())
-        proof_filename = f"lawyer_proofs/{filename}"
+        file_bytes = await lawyer_proof_file.read()
+        try:
+            public_url = GCSService.upload_file(file_bytes, lawyer_proof_file.filename, lawyer_proof_file.content_type)
+            proof_filename = public_url
+        except Exception as e:
+            # Fallback to local if GCS not configured properly yet
+            filename = f"{int(time.time())}_{lawyer_proof_file.filename}"
+            with open(f"uploads/lawyer_proofs/{filename}", "wb") as f:
+                f.write(file_bytes)
+            proof_filename = f"lawyer_proofs/{filename}"
 
     result = AuthService.register_user(
         username, email, password, 
@@ -600,16 +607,22 @@ async def send_message(
     file_type = None
     
     if file:
+        file_bytes = await file.read()
         file_name = file.filename
         file_type = file.content_type
-        file_ext = os.path.splitext(file_name)[1]
-        unique_filename = f"{int(time.time())}_{file_name}"
-        file_path = os.path.join("uploads/chats", unique_filename)
-        
-        with open(file_path, "wb") as buffer:
-            buffer.write(await file.read())
-        
-        file_url = f"/uploads/chats/{unique_filename}"
+        try:
+            public_url = GCSService.upload_file(file_bytes, file_name, file_type)
+            file_url = public_url
+        except Exception as e:
+            # Fallback to local
+            file_ext = os.path.splitext(file_name)[1]
+            unique_filename = f"{int(time.time())}_{file_name}"
+            file_path = os.path.join("uploads/chats", unique_filename)
+            
+            with open(file_path, "wb") as buffer:
+                buffer.write(file_bytes)
+            
+            file_url = f"/uploads/chats/{unique_filename}"
     
     new_msg = LawyerChatMessage(
         sender_id=current_user["user_id"],
