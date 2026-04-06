@@ -165,6 +165,13 @@ class LoginRequest(BaseModel):
 class RefreshRequest(BaseModel):
     refresh_token: str
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
 class TopicRequest(BaseModel):
     title: str
     description: str
@@ -245,6 +252,7 @@ async def register(
             public_url = GCSService.upload_file(file_bytes, lawyer_proof_file.filename, lawyer_proof_file.content_type)
             proof_filename = public_url
         except Exception as e:
+            print(f"\n⚠️ Executing local upload fallback! GCS Upload Failed. Quick Reason: {e}")
             # Fallback to local if GCS not configured properly yet
             filename = f"{int(time.time())}_{lawyer_proof_file.filename}"
             with open(f"uploads/lawyer_proofs/{filename}", "wb") as f:
@@ -275,6 +283,59 @@ def refresh(req: RefreshRequest):
     if not result["success"]:
         raise HTTPException(status_code=401, detail=result["message"])
     return result
+
+forgot_rate_limits = defaultdict(list)
+FORGOT_LIMIT = 5
+FORGOT_WINDOW = 3600 # 1 hour
+
+@app.post("/forgot-password")
+async def forgot_password(req: ForgotPasswordRequest):
+    from database import users_collection
+    from services.email_service import send_reset_email
+    
+    now = time.time()
+    forgot_rate_limits[req.email] = [t for t in forgot_rate_limits[req.email] if now - t < FORGOT_WINDOW]
+    if len(forgot_rate_limits[req.email]) >= FORGOT_LIMIT:
+        raise HTTPException(status_code=429, detail="Too many reset requests. Please try again later.")
+    forgot_rate_limits[req.email].append(now)
+    
+    user = users_collection.find_one({"email": req.email})
+    if user:
+        user_id = str(user["_id"])
+        token = AuthService.generate_reset_token(user_id)
+        # Assuming Vite dev frontend port for local testing, update if deployed
+        # You can also parse standard domain dynamically later
+        reset_link = f"http://localhost:5173/reset-password?token={token}"
+        send_reset_email(req.email, reset_link)
+        
+    return {"success": True, "message": "If that email is registered, a reset link has been sent."}
+
+@app.post("/reset-password")
+async def reset_password(req: ResetPasswordRequest):
+    from database import users_collection
+    from bson import ObjectId
+    import bcrypt
+    
+    if len(req.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
+    
+    user_id = AuthService.verify_reset_token(req.token)
+    if not user_id:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+        
+    user = users_collection.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if bcrypt.checkpw(req.new_password.encode('utf-8'), user["password_hash"]):
+        raise HTTPException(status_code=400, detail="New password cannot be the same as the old password")
+        
+    new_hash = bcrypt.hashpw(req.new_password.encode('utf-8'), bcrypt.gensalt())
+    users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"password_hash": new_hash}}
+    )
+    return {"success": True, "message": "Password reset successfully"}
 
 @app.get("/verify-token")
 async def verify_token(current_user: dict = Depends(get_current_user)):
@@ -590,6 +651,17 @@ async def admin_verify_lawyer(req: VerificationRequest, current_user: dict = Dep
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Lawyer not found")
     return {"success": True, "message": f"Lawyer {'verified' if req.is_verified else 'unverified'} successfully"}
+
+@app.delete("/admin/lawyers/{lawyer_id}")
+async def admin_delete_lawyer(lawyer_id: str, current_user: dict = Depends(check_role(["admin", "moderator"]))):
+    from database import users_collection
+    from bson import ObjectId
+    
+    result = users_collection.delete_one({"_id": ObjectId(lawyer_id), "role": "lawyer"})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Lawyer not found or user is not a lawyer")
+        
+    return {"success": True, "message": "Lawyer removed completely from the system"}
 
 # Person-to-Person Messaging
 @app.post("/messages")

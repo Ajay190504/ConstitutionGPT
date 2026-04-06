@@ -56,6 +56,21 @@ export default function AdminPage() {
         }
     }
 
+    const handleRemoveLawyer = async (lawyerId) => {
+        if (!window.confirm("Are you sure you want to completely remove this lawyer? This action cannot be undone.")) return;
+        
+        setActionLoading(lawyerId)
+        try {
+            await ApiService.deleteLawyer(lawyerId)
+            setLawyers(lawyers.filter(l => l.id !== lawyerId))
+        } catch (err) {
+            const errorMsg = err.message || 'Failed to remove lawyer from system.';
+            alert(errorMsg);
+        } finally {
+            setActionLoading(null)
+        }
+    }
+
     const handleResolveQuery = async (queryId, newStatus) => {
         setActionLoading(queryId)
         try {
@@ -151,13 +166,23 @@ export default function AdminPage() {
                                             )}
                                         </td>
                                         <td>
-                                            <button
-                                                className={`btn btn-sm ${lawyer.is_verified ? 'btn-outline-danger' : 'btn-success'}`}
-                                                onClick={() => handleToggleVerify(lawyer.id, lawyer.is_verified)}
-                                                disabled={actionLoading === lawyer.id}
-                                            >
-                                                {actionLoading === lawyer.id ? '...' : (lawyer.is_verified ? 'Revoke' : 'Verify')}
-                                            </button>
+                                            <div className="btn-group">
+                                                <button
+                                                    className={`btn btn-sm ${lawyer.is_verified ? 'btn-outline-danger' : 'btn-success'}`}
+                                                    onClick={() => handleToggleVerify(lawyer.id, lawyer.is_verified)}
+                                                    disabled={actionLoading === lawyer.id}
+                                                >
+                                                    {actionLoading === lawyer.id ? '...' : (lawyer.is_verified ? 'Revoke' : 'Verify')}
+                                                </button>
+                                                <button
+                                                    className="btn btn-sm btn-danger ms-1"
+                                                    onClick={() => handleRemoveLawyer(lawyer.id)}
+                                                    disabled={actionLoading === lawyer.id}
+                                                    title="Permanently remove lawyer"
+                                                >
+                                                    <i className="bi bi-trash"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 )) : (

@@ -40,5 +40,9 @@ class GCSService:
             return public_url
 
         except Exception as e:
-            print(f"GCS Upload Error: {e}")
+            import traceback
+            print("\n" + "="*50)
+            print("GCS UPLOAD ERROR DIAGNOSTIC:")
+            traceback.print_exc()
+            print("="*50 + "\n")
             raise e

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import AskPage from "./pages/AskPage";
 import AnswerPage from "./pages/AnswerPage";
@@ -97,6 +98,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage onLogin={setUser} />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   ) : (

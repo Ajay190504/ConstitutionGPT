@@ -177,6 +177,20 @@ class ApiService {
     return this.request('/verify-token');
   }
 
+  async forgotPassword(email) {
+    return this.request('/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async resetPassword(token, newPassword) {
+    return this.request('/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, new_password: newPassword }),
+    });
+  }
+
   // Chat endpoints
   async sendMessage(message, lang = 'en') {
     return this.request('/chat', {
@@ -249,6 +263,12 @@ class ApiService {
     return this.request('/admin/verify', {
       method: 'POST',
       body: JSON.stringify({ lawyer_id: lawyerId, is_verified: isVerified }),
+    });
+  }
+
+  async deleteLawyer(lawyerId) {
+    return this.request(`/admin/lawyers/${lawyerId}`, {
+      method: 'DELETE',
     });
   }
 

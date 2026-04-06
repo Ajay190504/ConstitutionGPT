@@ -162,3 +162,50 @@ class AuthService:
             return None
         except jwt.InvalidTokenError:
             return None
+
+    @staticmethod
+    def generate_reset_token(user_id: str) -> str:
+        import secrets
+        import hashlib
+        from database import reset_tokens_collection
+        
+        raw_token = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(raw_token.encode('utf-8')).hexdigest()
+        
+        # Invalidate previous tokens for this user
+        reset_tokens_collection.update_many(
+            {"user_id": user_id, "used": False},
+            {"$set": {"used": True}}
+        )
+        
+        reset_tokens_collection.insert_one({
+            "user_id": user_id,
+            "token_hash": token_hash,
+            "expires_at": datetime.utcnow() + timedelta(minutes=15),
+            "used": False
+        })
+        
+        return raw_token
+
+    @staticmethod
+    def verify_reset_token(raw_token: str) -> Optional[str]:
+        import hashlib
+        from database import reset_tokens_collection
+        
+        token_hash = hashlib.sha256(raw_token.encode('utf-8')).hexdigest()
+        token_record = reset_tokens_collection.find_one({
+            "token_hash": token_hash,
+            "used": False,
+            "expires_at": {"$gt": datetime.utcnow()}
+        })
+        
+        if not token_record:
+            return None
+            
+        # Mark as used (so it can't be reused)
+        reset_tokens_collection.update_one(
+            {"_id": token_record["_id"]},
+            {"$set": {"used": True}}
+        )
+        
+        return token_record["user_id"]
