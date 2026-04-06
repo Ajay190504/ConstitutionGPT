@@ -48,8 +48,13 @@ def send_reset_email(to_email: str, reset_link: str):
     msg.attach(part2)
 
     try:
-        server = smtplib.SMTP(smtp_server, int(smtp_port))
-        server.starttls()
+        port = int(smtp_port)
+        if port == 465:
+            server = smtplib.SMTP_SSL(smtp_server, port)
+        else:
+            server = smtplib.SMTP(smtp_server, port)
+            server.starttls()
+            
         server.login(smtp_username, smtp_password)
         server.sendmail(from_email, to_email, msg.as_string())
         server.quit()
