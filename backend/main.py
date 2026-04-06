@@ -293,20 +293,29 @@ async def forgot_password(req: ForgotPasswordRequest):
     from database import users_collection
     from services.email_service import send_reset_email
     
+    email_query = req.email.lower().strip()
     now = time.time()
-    forgot_rate_limits[req.email] = [t for t in forgot_rate_limits[req.email] if now - t < FORGOT_WINDOW]
-    if len(forgot_rate_limits[req.email]) >= FORGOT_LIMIT:
-        raise HTTPException(status_code=429, detail="Too many reset requests. Please try again later.")
-    forgot_rate_limits[req.email].append(now)
     
-    user = users_collection.find_one({"email": req.email})
+    forgot_rate_limits[email_query] = [t for t in forgot_rate_limits.get(email_query, []) if now - t < FORGOT_WINDOW]
+    if len(forgot_rate_limits.get(email_query, [])) >= FORGOT_LIMIT:
+        raise HTTPException(status_code=429, detail="Too many reset requests. Please try again later.")
+    forgot_rate_limits[email_query].append(now)
+    
+    # Case-insensitive lookup for the user
+    user = users_collection.find_one({"email": {"$regex": f"^{req.email}$", "$options": "i"}})
     if user:
         user_id = str(user["_id"])
         token = AuthService.generate_reset_token(user_id)
+        # Using Vercel's relative domain or fallback local
         # Assuming Vite dev frontend port for local testing, update if deployed
-        # You can also parse standard domain dynamically later
-        reset_link = f"http://localhost:5173/reset-password?token={token}"
-        send_reset_email(req.email, reset_link)
+        reset_link = f"https://constitutiongpt-frontend.vercel.app/reset-password?token={token}"
+        
+        # Also log for local testing
+        print(f"DEBUG Reset Link generated for {req.email}: {reset_link}")
+        
+        success = send_reset_email(req.email, reset_link)
+        if not success:
+            return {"success": False, "message": "Failed to send the email. Please contact support or check server logs."}
         
     return {"success": True, "message": "If that email is registered, a reset link has been sent."}
 
