@@ -306,11 +306,9 @@ async def forgot_password(req: ForgotPasswordRequest):
     if user:
         user_id = str(user["_id"])
         token = AuthService.generate_reset_token(user_id)
-        # Using Vercel's relative domain or fallback local
-        # Assuming Vite dev frontend port for local testing, update if deployed
-        reset_link = f"https://constitutiongpt-frontend.vercel.app/reset-password?token={token}"
-        
-        # Also log for local testing
+        # Using FRONTEND_URL or defaulting to the active deployment
+        frontend_url = os.getenv("FRONTEND_URL", "https://constitution-gpt-blue.vercel.app").rstrip("/")
+        reset_link = f"{frontend_url}/reset-password?token={token}"
         print(f"DEBUG Reset Link generated for {req.email}: {reset_link}")
         
         success = send_reset_email(req.email, reset_link)
