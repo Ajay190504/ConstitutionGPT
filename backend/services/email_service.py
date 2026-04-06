@@ -8,6 +8,7 @@ def send_reset_email(to_email: str, reset_link: str):
     smtp_port = os.getenv("SMTP_PORT")
     smtp_username = os.getenv("SMTP_USERNAME")
     smtp_password = os.getenv("SMTP_PASSWORD")
+    from_email = os.getenv("FROM_EMAIL", smtp_username)
     
     # Fallback to console print if SMTP is not configured
     if not all([smtp_server, smtp_port, smtp_username, smtp_password]):
@@ -20,7 +21,7 @@ def send_reset_email(to_email: str, reset_link: str):
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = "Password Reset Request - ConstitutionGPT"
-    msg["From"] = smtp_username
+    msg["From"] = from_email
     msg["To"] = to_email
 
     text = f"Hello,\n\nPlease use the following link to reset your password:\n{reset_link}\n\nThis link will expire in 15 minutes."
@@ -50,7 +51,7 @@ def send_reset_email(to_email: str, reset_link: str):
         server = smtplib.SMTP(smtp_server, int(smtp_port))
         server.starttls()
         server.login(smtp_username, smtp_password)
-        server.sendmail(smtp_username, to_email, msg.as_string())
+        server.sendmail(from_email, to_email, msg.as_string())
         server.quit()
         return True
     except Exception as e:
