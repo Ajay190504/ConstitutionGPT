@@ -10,7 +10,7 @@ chromadb
 langchain-text-splitters
 langchain-community
 pypdf
-sentence-transformers
+# sentence-transformers (REMOVED to save ~300MB RAM, using OpenAI instead)
 python-multipart
 gTTS
 SpeechRecognition

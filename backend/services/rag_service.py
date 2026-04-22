@@ -44,11 +44,16 @@ class RAGService:
                     if embedding_mode == "openai":
                         print("❌ Forced OpenAI mode failed. Falling back to Keyword search.")
                         return None
-                    print("🔄 Falling back to Local Embeddings...")
-                    cls._embedding_function = embedding_functions.DefaultEmbeddingFunction()
+                    print("🔄 Falling back to Keyword Search (Memory Protection)...")
+                    return None # Do NOT use local embeddings on Render
             else:
-                print("⚠️ Using Local Embeddings (High Memory Usage). Consider using OPENAI_API_KEY to save RAM.")
-                cls._embedding_function = embedding_functions.DefaultEmbeddingFunction()
+                # Check if we should even try local embeddings
+                if os.getenv("ALLOW_LOCAL_EMBEDDINGS", "false").lower() == "true":
+                    print("⚠️ Using Local Embeddings (High Memory Usage!)...")
+                    cls._embedding_function = embedding_functions.DefaultEmbeddingFunction()
+                else:
+                    print("ℹ️ Local embeddings disabled for memory protection. Set ALLOW_LOCAL_EMBEDDINGS=true to enable.")
+                    return None
             
             cls._collection = client.get_or_create_collection(
                 name="indian_constitution_v3",
@@ -65,10 +70,10 @@ class RAGService:
             return None
 
     @classmethod
-    def add_documents(cls, documents: List[Dict[str, str]], batch_size: int = 50):
+    def add_documents(cls, documents: List[Dict[str, str]], batch_size: int = 20):
         """
         Expects a list of dicts with 'content' and 'metadata'.
-        Processed in batches to prevent memory spikes.
+        Processed in small batches to prevent memory spikes.
         """
         collection = cls.get_collection()
         if not collection:
@@ -82,38 +87,25 @@ class RAGService:
                 chunk_overlap=100
             )
             
-            all_texts = []
-            all_metadatas = []
-            all_ids = []
-            
-            # Step 1: Split all docs into chunks first (minimal memory impact compared to embedding)
-            for i, doc in enumerate(documents):
+            # Process documents one by one to avoid massive list building
+            for doc in documents:
                 chunks = text_splitter.split_text(doc["content"])
                 source = doc.get("metadata", {}).get("source", "unknown")
-                for j, chunk in enumerate(chunks):
-                    all_ids.append(f"{source}_{i}_chunk_{j}_{int(time.time())}")
-                    all_texts.append(chunk)
-                    all_metadatas.append(doc.get("metadata", {}))
-            
-            # Step 2: Add to Chroma in batches (this is where memory spikes happen during embedding)
-            total_chunks = len(all_texts)
-            if total_chunks == 0:
-                return
-
-            print(f"📦 Adding {total_chunks} chunks to ChromaDB in batches of {batch_size}...")
-            
-            for i in range(0, total_chunks, batch_size):
-                end = min(i + batch_size, total_chunks)
-                batch_texts = all_texts[i:end]
-                batch_metadatas = all_metadatas[i:end]
-                batch_ids = all_ids[i:end]
                 
-                collection.add(
-                    ids=batch_ids,
-                    documents=batch_texts,
-                    metadatas=batch_metadatas
-                )
-                print(f"✅ Added batch {i//batch_size + 1}/{(total_chunks + batch_size - 1)//batch_size} ({end}/{total_chunks} chunks)")
+                # Add chunks for this document in small batches
+                for i in range(0, len(chunks), batch_size):
+                    end = min(i + batch_size, len(chunks))
+                    batch_texts = chunks[i:end]
+                    batch_ids = [f"{source}_{int(time.time())}_{i+j}" for j in range(len(batch_texts))]
+                    batch_metadatas = [doc.get("metadata", {}) for _ in range(len(batch_texts))]
+                    
+                    collection.add(
+                        ids=batch_ids,
+                        documents=batch_texts,
+                        metadatas=batch_metadatas
+                    )
+                
+                print(f"✅ Indexed {len(chunks)} chunks from {source}")
                 
         except Exception as e:
             print(f"Failed to add documents to Chroma: {e}")
@@ -184,7 +176,7 @@ class RAGService:
 
     @classmethod
     def _auto_ingest_pdfs(cls):
-        """Internal helper to ingest PDFs page-by-page to save memory."""
+        """Internal helper to ingest PDFs page-by-page using lazy loading."""
         try:
             from langchain_community.document_loaders import PyPDFLoader
             
@@ -200,28 +192,21 @@ class RAGService:
                     print(f"📄 Auto-ingesting {pdf_name} page-by-page...")
                     loader = PyPDFLoader(path)
                     
-                    # Instead of loading all pages into memory, we process one by one
-                    # Note: PyPDFLoader.load() is still used but we clear the list often or process immediately
-                    pages = loader.load()
-                    
-                    pdf_docs = []
-                    for page in pages:
-                        pdf_docs.append({
+                    # Use lazy_load to avoid loading full PDF into memory
+                    # Process every page immediately
+                    for i, page in enumerate(loader.lazy_load()):
+                        doc_chunk = [{
                             "content": page.page_content,
-                            "metadata": {"source": pdf_name, "page": page.metadata.get("page", 0)}
-                        })
+                            "metadata": {"source": pdf_name, "page": i}
+                        }]
+                        cls.add_documents(doc_chunk)
                         
-                        # Add in smaller per-page chunks to keep memory usage low
-                        if len(pdf_docs) >= 10: # Process every 10 pages
-                            cls.add_documents(pdf_docs)
-                            pdf_docs = []
-                    
-                    # Final batch for the current PDF
-                    if pdf_docs:
-                        cls.add_documents(pdf_docs)
+                        if i % 50 == 0:
+                            print(f"   - Progress: {i} pages indexed...")
                     
                     print(f"✅ Finished indexing {pdf_name}")
                     
         except Exception as e:
             print(f"RAG auto-ingest warning: {e}")
+
 

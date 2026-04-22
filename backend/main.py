@@ -121,6 +121,10 @@ async def startup_event():
     # Initialize RAG in a separate thread to prevent blocking server startup
     def run_rag_init():
         try:
+            # Wait a bit for the server to stabilize and pass health checks
+            print("⏳ Waiting 10s for server stabilization before RAG init...")
+            time.sleep(10)
+            
             if os.getenv("SKIP_RAG_AUTO_INGEST", "false").lower() == "true":
                 print("ℹ️ RAG Auto-Ingest is DISABLED via environment variable.")
                 
