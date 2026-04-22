@@ -30,19 +30,19 @@ export default function HelpPage() {
   }
   const sections = [
     {
-      title: '🎙️ Voice AI Assistant',
+      title: 'Voice AI Assistant',
       content: 'You can use your voice to ask legal questions. Click the microphone icon in the "Ask AI" page or the chat interface. Say "Start Listening" and speak clearly. The AI will provide citations from the Indian Constitution and BNS/BNSS codes.'
     },
     {
-      title: '📅 Booking Consultations',
+      title: 'Booking Consultations',
       content: 'To connect with a lawyer, go to "Connect to Lawyer". Search by name, city, or specialization. Click "Book" on a profile to choose a date and time slot. Your request will appear in "My Appointments" once confirmed.'
     },
     {
-      title: '📁 Document Sharing',
+      title: 'Document Sharing',
       content: 'During a chat with a lawyer, use the paperclip icon to upload legal documents (PDF/Images). This is useful for sharing case files, NOCs, or receiving billing documents from your legal representative.'
     },
     {
-      title: '⚖️ Legal Database',
+      title: 'Legal Database',
       content: 'The platform is updated with the latest Bharat Nyaya Sanhita (BNS) 2023, BNSS, and BSA codes. All AI responses include verifiable legal citations.'
     }
   ];

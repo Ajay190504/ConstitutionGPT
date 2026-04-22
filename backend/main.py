@@ -43,7 +43,7 @@ async def root():
 
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
-# ✅ CORS FIX - Added FIRST to be the OUTERMOST middleware
+# CORS FIX - Added FIRST to be the OUTERMOST middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -112,9 +112,9 @@ async def startup_event():
     openai_key = os.getenv("OPENAI_API_KEY")
     
     if not groq_key or "gsk_" not in groq_key:
-        print("\n⚠️ WARNING: GROQ_API_KEY is missing or invalid in backend/.env")
+        print("\nWARNING: GROQ_API_KEY is missing or invalid in backend/.env")
     if not openai_key or "sk-" not in openai_key:
-        print("\n⚠️ WARNING: OPENAI_API_KEY is missing or invalid in backend/.env")
+        print("\nWARNING: OPENAI_API_KEY is missing or invalid in backend/.env")
 
     TopicsService.initialize_default_topics()
     
@@ -122,17 +122,17 @@ async def startup_event():
     def run_rag_init():
         try:
             # Wait a bit for the server to stabilize and pass health checks
-            print("⏳ Waiting 10s for server stabilization before RAG init...")
+            print("Waiting 10s for server stabilization before RAG init...")
             time.sleep(10)
             
             if os.getenv("SKIP_RAG_AUTO_INGEST", "false").lower() == "true":
-                print("ℹ️ RAG Auto-Ingest is DISABLED via environment variable.")
+                print("RAG Auto-Ingest is DISABLED via environment variable.")
                 
-            print("🚀 Initializing AI Search (RAG) in background...")
+            print("Initializing AI Search (RAG) in background...")
             RAGService.initialize_with_topics()
-            print("✅ AI Search initialization check complete.")
+            print("AI Search initialization check complete.")
         except Exception as e:
-            print(f"⚠️ RAG Initialization failed: {str(e)}")
+            print(f"RAG Initialization failed: {str(e)}")
 
     threading.Thread(target=run_rag_init, daemon=True).start()
 
@@ -277,7 +277,7 @@ async def register(
             public_url = GCSService.upload_file(file_bytes, lawyer_proof_file.filename, lawyer_proof_file.content_type)
             proof_filename = public_url
         except Exception as e:
-            print(f"\n⚠️ Executing local upload fallback! GCS Upload Failed. Quick Reason: {e}")
+            print(f"\nExecuting local upload fallback! GCS Upload Failed. Quick Reason: {e}")
             # Fallback to local if GCS not configured properly yet
             filename = f"{int(time.time())}_{lawyer_proof_file.filename}"
             local_path = os.path.join(UPLOADS_DIR, "lawyer_proofs", filename)
@@ -428,7 +428,7 @@ async def chat(req: ChatRequest, current_user: dict = Depends(get_current_user))
         disclaimer = (
             "<br/><br/><hr/>"
             "<div style='margin-top: 15px; padding: 15px; background-color: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107; border-radius: 4px; color: #664d03;'>"
-            "⚖️ <strong>Disclaimer:</strong> <em>This tool is built for educational purposes only and does not provide legal advice. "
+            "<strong>Disclaimer:</strong> <em>This tool is built for educational purposes only and does not provide legal advice. "
             "For professional legal assistance, please consult a qualified legal professional.</em>"
             "<br/><br/><a href='/connect-lawyer' class='btn btn-warning btn-sm fw-bold' style='text-decoration: none; color: black;'>Connect with Verified Lawyers</a>"
             "</div>"

@@ -14,7 +14,7 @@ class RAGService:
             
         embedding_mode = os.getenv("EMBEDDING_MODE", "auto").lower()
         if embedding_mode in ["keyword", "off", "none"]:
-            print(f"🚀 RAG Mode: {embedding_mode.upper()}. Vector Database bypassed.")
+            print(f"RAG Mode: {embedding_mode.upper()}. Vector Database bypassed.")
             return None
 
         try:
@@ -31,28 +31,28 @@ class RAGService:
 
             if (embedding_mode == "openai" or (embedding_mode == "auto" and openai_key)) and openai_key:
                 try:
-                    print("🧠 Attempting to use OpenAI Embeddings (Memory-Efficient Mode)...")
+                    print("Attempting to use OpenAI Embeddings (Memory-Efficient Mode)...")
                     cls._embedding_function = embedding_functions.OpenAIEmbeddingFunction(
                         api_key=openai_key,
                         model_name="text-embedding-3-small"
                     )
                     # Test if OpenAI key works
                     cls._embedding_function(["test"])
-                    print("✅ OpenAI Embeddings verified.")
+                    print("OpenAI Embeddings verified.")
                 except Exception as e:
-                    print(f"⚠️ OpenAI Embedding failed (Quota reached?): {e}")
+                    print(f"OpenAI Embedding failed (Quota reached?): {e}")
                     if embedding_mode == "openai":
-                        print("❌ Forced OpenAI mode failed. Falling back to Keyword search.")
+                        print("Forced OpenAI mode failed. Falling back to Keyword search.")
                         return None
-                    print("🔄 Falling back to Keyword Search (Memory Protection)...")
+                    print("Falling back to Keyword Search (Memory Protection)...")
                     return None # Do NOT use local embeddings on Render
             else:
                 # Check if we should even try local embeddings
                 if os.getenv("ALLOW_LOCAL_EMBEDDINGS", "false").lower() == "true":
-                    print("⚠️ Using Local Embeddings (High Memory Usage!)...")
+                    print("Using Local Embeddings (High Memory Usage!)...")
                     cls._embedding_function = embedding_functions.DefaultEmbeddingFunction()
                 else:
-                    print("ℹ️ Local embeddings disabled for memory protection. Set ALLOW_LOCAL_EMBEDDINGS=true to enable.")
+                    print("Local embeddings disabled for memory protection. Set ALLOW_LOCAL_EMBEDDINGS=true to enable.")
                     return None
             
             cls._collection = client.get_or_create_collection(
@@ -105,7 +105,7 @@ class RAGService:
                         metadatas=batch_metadatas
                     )
                 
-                print(f"✅ Indexed {len(chunks)} chunks from {source}")
+                print(f"Indexed {len(chunks)} chunks from {source}")
                 
         except Exception as e:
             print(f"Failed to add documents to Chroma: {e}")
@@ -140,7 +140,7 @@ class RAGService:
     def initialize_with_topics(cls):
         """Seed the vector DB with constitutional data if empty."""
         if os.getenv("SKIP_RAG_AUTO_INGEST", "false").lower() == "true":
-            print("⏭️ Skipping RAG auto-ingest as per SKIP_RAG_AUTO_INGEST env var.")
+            print("Skipping RAG auto-ingest as per SKIP_RAG_AUTO_INGEST env var.")
             return
 
         collection = cls.get_collection()
@@ -150,10 +150,10 @@ class RAGService:
         try:
             from database import topics_collection
             if collection.count() > 0:
-                print("ℹ️ RAG database already contains data. Skipping initial seed.")
+                print("RAG database already contains data. Skipping initial seed.")
                 return
             
-            print("🚀 Seeding RAG database with initial data...")
+            print("Seeding RAG database with initial data...")
             
             # 1. Seed from MongoDB topics
             topics = list(topics_collection.find({}))
@@ -189,7 +189,7 @@ class RAGService:
             for pdf_name in pdfs:
                 path = os.path.join(base_path, pdf_name)
                 if os.path.exists(path):
-                    print(f"📄 Auto-ingesting {pdf_name} page-by-page...")
+                    print(f"Auto-ingesting {pdf_name} page-by-page...")
                     loader = PyPDFLoader(path)
                     
                     # Use lazy_load to avoid loading full PDF into memory
@@ -204,7 +204,7 @@ class RAGService:
                         if i % 50 == 0:
                             print(f"   - Progress: {i} pages indexed...")
                     
-                    print(f"✅ Finished indexing {pdf_name}")
+                    print(f"Finished indexing {pdf_name}")
                     
         except Exception as e:
             print(f"RAG auto-ingest warning: {e}")
