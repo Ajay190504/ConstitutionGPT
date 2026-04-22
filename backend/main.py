@@ -426,10 +426,12 @@ async def chat(req: ChatRequest, current_user: dict = Depends(get_current_user))
         
         # Append professional legal disclaimer and lawyer redirection
         disclaimer = (
-            "\n\n---\n"
-            "⚖️ **Disclaimer:** *This tool is built for educational purposes only and does not provide legal advice. "
-            "For professional legal assistance, please consult a qualified legal professional. "
-            "You can [connect with verified lawyers here](/lawyers).*"
+            "<br/><br/><hr/>"
+            "<div style='margin-top: 15px; padding: 15px; background-color: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107; border-radius: 4px; color: #664d03;'>"
+            "⚖️ <strong>Disclaimer:</strong> <em>This tool is built for educational purposes only and does not provide legal advice. "
+            "For professional legal assistance, please consult a qualified legal professional.</em>"
+            "<br/><br/><a href='/connect-lawyer' class='btn btn-warning btn-sm fw-bold' style='text-decoration: none; color: black;'>Connect with Verified Lawyers</a>"
+            "</div>"
         )
         reply += disclaimer
         
