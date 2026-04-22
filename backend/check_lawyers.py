@@ -1,1 +1,0 @@
-from pymongo import MongoClient; client = MongoClient('mongodb://localhost:27017/'); db = client['constitution_gpt']; users = list(db.users.find({'role': 'lawyer'}, {'username': 1, 'lawyer_proof_file': 1})); print(users)

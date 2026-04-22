@@ -15,7 +15,8 @@ class RAGService:
             import chromadb
             
             # Initialize persistent client
-            db_path = os.path.join(os.path.dirname(__file__), "..", "chroma_db")
+            data_dir = os.getenv("DATA_DIR", ".")
+            db_path = os.path.join(data_dir, "chroma_db")
             client = chromadb.PersistentClient(path=db_path)
             
             # Using the default lightweight embedding function provided by ChromaDB

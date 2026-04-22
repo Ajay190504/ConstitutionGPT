@@ -4,7 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from typing import List, Dict, Optional
+from typing import Optional
 import openai
 from groq import Groq
 from dotenv import load_dotenv
@@ -22,12 +22,26 @@ from services.gcs_service import GCSService
 load_dotenv()
 
 # Ensure uploads directory exists before mounting
-os.makedirs("uploads", exist_ok=True)
-os.makedirs("uploads/chats", exist_ok=True)
-os.makedirs("uploads/lawyer_proofs", exist_ok=True)
+DATA_DIR = os.getenv("DATA_DIR", ".")
+UPLOADS_DIR = os.path.join(DATA_DIR, "uploads")
+os.makedirs(os.path.join(UPLOADS_DIR, "chats"), exist_ok=True)
+os.makedirs(os.path.join(UPLOADS_DIR, "lawyer_proofs"), exist_ok=True)
 
 app = FastAPI()
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# Health check and root routes (moved here for Render deployment reliability)
+@app.get("/health")
+@app.head("/health")
+async def health_check():
+    print("Health check received")
+    return {"status": "healthy", "timestamp": time.time()}
+
+@app.get("/")
+@app.head("/")
+async def root():
+    return {"message": "ConstitutionGPT API is running"}
+
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
 # ✅ CORS FIX - Added FIRST to be the OUTERMOST middleware
 app.add_middleware(
@@ -57,6 +71,10 @@ async def rate_limit_middleware(request: Request, call_next):
             content={"detail": "Too many requests. Please try again later."}
         )
     
+    # Exempt health check and root routes from rate limiting
+    if request.url.path in ["/health", "/"]:
+        return await call_next(request)
+
     try:
         user_requests[client_ip].append(now)
         return await call_next(request)
@@ -255,7 +273,8 @@ async def register(
             print(f"\n⚠️ Executing local upload fallback! GCS Upload Failed. Quick Reason: {e}")
             # Fallback to local if GCS not configured properly yet
             filename = f"{int(time.time())}_{lawyer_proof_file.filename}"
-            with open(f"uploads/lawyer_proofs/{filename}", "wb") as f:
+            local_path = os.path.join(UPLOADS_DIR, "lawyer_proofs", filename)
+            with open(local_path, "wb") as f:
                 f.write(file_bytes)
             proof_filename = f"lawyer_proofs/{filename}"
 
@@ -696,7 +715,7 @@ async def send_message(
             # Fallback to local
             file_ext = os.path.splitext(file_name)[1]
             unique_filename = f"{int(time.time())}_{file_name}"
-            file_path = os.path.join("uploads/chats", unique_filename)
+            file_path = os.path.join(UPLOADS_DIR, "chats", unique_filename)
             
             with open(file_path, "wb") as buffer:
                 buffer.write(file_bytes)
@@ -1020,15 +1039,9 @@ async def translate_and_speak(req: TranslateSpeakRequest):
 @app.get("/audio/{filename}")
 async def get_audio(filename: str):
     from fastapi.responses import FileResponse
-    file_path = os.path.join("uploads", filename)
+    file_path = os.path.join(UPLOADS_DIR, filename)
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Audio file not found")
     return FileResponse(file_path)
 
-@app.get("/health")
-def health_check():
-    return {"status": "healthy", "timestamp": time.time()}
 
-@app.api_route("/", methods=["GET", "HEAD"])
-def root():
-    return {"message": "ConstitutionGPT API is running"}

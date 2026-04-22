@@ -12,9 +12,27 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      - key: GROQ_API_KEY
+        sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: FRONTEND_URL
+        value: https://constitution-gpt-blue.vercel.app
+      - key: SMTP_SERVER
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: GCS_BUCKET_NAME
+        sync: false
+      - key: GCP_CREDENTIALS_JSON
+        sync: false
+      - key: DATA_DIR
+        value: /data
     disk:
       name: constitution-data
-      mountPath: /opt/render/project/src/backend/chroma_db
+      mountPath: /data
       sizeGB: 1
