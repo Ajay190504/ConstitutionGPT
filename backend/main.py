@@ -121,9 +121,12 @@ async def startup_event():
     # Initialize RAG in a separate thread to prevent blocking server startup
     def run_rag_init():
         try:
+            if os.getenv("SKIP_RAG_AUTO_INGEST", "false").lower() == "true":
+                print("ℹ️ RAG Auto-Ingest is DISABLED via environment variable.")
+                
             print("🚀 Initializing AI Search (RAG) in background...")
             RAGService.initialize_with_topics()
-            print("✅ AI Search initialized successfully.")
+            print("✅ AI Search initialization check complete.")
         except Exception as e:
             print(f"⚠️ RAG Initialization failed: {str(e)}")
 
@@ -403,14 +406,12 @@ async def chat(req: ChatRequest, current_user: dict = Depends(get_current_user))
             "- Hypothetical scenarios related to laws, legal procedures, and rules.\n"
             "- The Indian Constitution and the legal codes (e.g., BNS, BNSS, BSA).\n\n"
             "IF THE QUERY IS IN-SCOPE:\n"
-            "- Provide a helpful, accurate, and professional answer based on the provided context.\n"
-            "- You MUST cite specific Article numbers (for the Constitution) or Section numbers (for BNS/BNSS/BSA) in every answer using the provided context.\n\n"
+            "- Provide a helpful, accurate, and professional answer.\n"
+            "- If context is provided below, use it and cite specific Article/Section numbers.\n"
+            "- If NO context is provided (it will be empty below), use your own extensive knowledge of the Indian Legal System to answer as accurately as possible.\n\n"
             "IF THE QUERY IS OUT OF SCOPE (not related to law, rules, or the constitution):\n"
-            "- You MUST NOT answer the user's question, even partially.\n"
-            "- You MUST reply ONLY with a professional apology emphasizing your domain limitations, followed by a brief summary of what you can answer. "
-            "For example: 'I apologize, but this question is out of my scope of expertise. I am ConstitutionGPT, and I am designed to assist exclusively with queries related to the Indian Constitution, legal rules, acts, and the Indian Legal System.'\n"
-            "- Under no circumstances should you apologize and then proceed to answer the query.\n\n"
-            "CONTEXT FOR ANSWERING IN-SCOPE QUERIES:\n"
+            "- Reply ONLY with a professional apology emphasizing your domain limitations.\n\n"
+            "CONTEXT FROM CONSTITUTIONAL DOCUMENTS (May be empty):\n"
             f"{context_text}\n"
         )
 
