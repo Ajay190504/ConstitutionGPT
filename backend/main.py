@@ -1025,6 +1025,10 @@ async def get_audio(filename: str):
         raise HTTPException(status_code=404, detail="Audio file not found")
     return FileResponse(file_path)
 
-@app.get("/")
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "timestamp": time.time()}
+
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {"message": "ConstitutionGPT API is running"}
