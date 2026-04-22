@@ -424,6 +424,15 @@ async def chat(req: ChatRequest, current_user: dict = Depends(get_current_user))
         
         reply = response.choices[0].message.content
         
+        # Append professional legal disclaimer and lawyer redirection
+        disclaimer = (
+            "\n\n---\n"
+            "⚖️ **Disclaimer:** *This tool is built for educational purposes only and does not provide legal advice. "
+            "For professional legal assistance, please consult a qualified legal professional. "
+            "You can [connect with verified lawyers here](/lawyers).*"
+        )
+        reply += disclaimer
+        
         # Translate if needed
         if req.lang == "hi":
             try:
