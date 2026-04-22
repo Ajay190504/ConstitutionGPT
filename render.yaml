@@ -13,3 +13,7 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
+    disk:
+      name: constitution-data
+      mountPath: /opt/render/project/src/backend/chroma_db
+      sizeGB: 1

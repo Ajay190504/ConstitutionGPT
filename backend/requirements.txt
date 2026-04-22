@@ -8,6 +8,9 @@ bcrypt
 PyJWT
 chromadb
 langchain-text-splitters
+langchain-community
+pypdf
+sentence-transformers
 python-multipart
 gTTS
 SpeechRecognition

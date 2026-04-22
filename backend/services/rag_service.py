@@ -19,21 +19,21 @@ class RAGService:
             client = chromadb.PersistentClient(path=db_path)
             
             # Using the default lightweight embedding function provided by ChromaDB
-            # This avoids loading the massive sentence-transformers torch library
             from chromadb.utils import embedding_functions
             cls._embedding_function = embedding_functions.DefaultEmbeddingFunction()
             
             cls._collection = client.get_or_create_collection(
-                name="indian_constitution",
+                name="indian_constitution_v3",
                 embedding_function=cls._embedding_function
             )
             cls._initialized_chroma = True
+            print("SUCCESS: ChromaDB initialized successfully.")
             return cls._collection
         except ImportError:
-            # Silence import errors as we have a fallback
+            print("WARNING: 'chromadb' package missing. falling back to keyword search.")
             return None
         except Exception as e:
-            print(f"Error initializing ChromaDB: {e}")
+            print(f"ERROR: Error initializing ChromaDB: {e}")
             return None
 
     @classmethod
@@ -46,7 +46,7 @@ class RAGService:
             return
         
         try:
-            from langchain.text_splitter import RecursiveCharacterTextSplitter
+            from langchain_text_splitters import RecursiveCharacterTextSplitter
             
             text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=1000,
@@ -100,7 +100,7 @@ class RAGService:
 
     @classmethod
     def initialize_with_topics(cls):
-        """Seed the vector DB with existing constitutional topics."""
+        """Seed the vector DB with constitutional data if empty."""
         collection = cls.get_collection()
         if not collection:
             return
@@ -109,7 +109,10 @@ class RAGService:
             from database import topics_collection
             if collection.count() > 0:
                 return
-                
+            
+            print("Seeding RAG database with initial data...")
+            
+            # 1. Seed from MongoDB topics
             topics = list(topics_collection.find({}))
             docs_to_add = [
                 {
@@ -121,5 +124,40 @@ class RAGService:
             
             if docs_to_add:
                 cls.add_documents(docs_to_add)
+                
+            # 2. Automatically try to ingest PDFs if they exist (for production/fresh deploys)
+            cls._auto_ingest_pdfs()
+            
         except Exception as e:
             print(f"RAG seeding error: {e}")
+
+    @classmethod
+    def _auto_ingest_pdfs(cls):
+        """Internal helper to ingest PDFs if they are in the constitution_db folder."""
+        try:
+            from langchain_community.document_loaders import PyPDFLoader
+            
+            base_path = os.path.join(os.path.dirname(__file__), "..", "constitution_db")
+            if not os.path.exists(base_path):
+                return
+                
+            pdfs = ["constitution_eng.pdf", "constitution_hindi.pdf"]
+            all_pdf_docs = []
+            
+            for pdf_name in pdfs:
+                path = os.path.join(base_path, pdf_name)
+                if os.path.exists(path):
+                    print(f"Auto-ingesting {pdf_name}...")
+                    loader = PyPDFLoader(path)
+                    pages = loader.load()
+                    for page in pages:
+                        all_pdf_docs.append({
+                            "content": page.page_content,
+                            "metadata": {"source": pdf_name, "page": page.metadata.get("page", 0)}
+                        })
+            
+            if all_pdf_docs:
+                cls.add_documents(all_pdf_docs)
+                print(f"Successfully auto-indexed {len(all_pdf_docs)} PDF pages.")
+        except Exception as e:
+            print(f"RAG auto-ingest warning: {e}")
