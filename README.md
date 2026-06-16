@@ -366,8 +366,3 @@ B.Tech Computer Science & Engineering
 
 Java Full Stack Developer | AI Developer | Legal-Tech Project Developer
 
----
-
-## License
-
-This project is licensed under the MIT License.
